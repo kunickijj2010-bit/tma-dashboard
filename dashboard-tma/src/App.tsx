@@ -6,8 +6,9 @@ import './App.css'
 
 interface Employee {
     name: string
+    startTime: string
     endTime: string
-    active: boolean
+    isDop: boolean
     department?: string
 }
 
@@ -19,18 +20,30 @@ interface Department {
     employees: Employee[]
 }
 
+interface Analytics {
+    totalOnline: number
+    totalDops: number
+    mskTimeStr: string
+}
+
 function App() {
     const [activeDept, setActiveDept] = useState<string | null>(null)
     const [data, setData] = useState<Department[]>([])
+    const [analytics, setAnalytics] = useState<Analytics | null>(null)
     const [loading, setLoading] = useState(true)
 
     const fetchData = async () => {
         try {
             const resp = await fetch('https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/telegram-bot?format=json')
             const json = await resp.json()
-            // Ensure data is an array
-            if (Array.isArray(json)) {
-                setData(json)
+
+            if (json.departments) {
+                setData(json.departments)
+                setAnalytics({
+                    totalOnline: json.totalOnline,
+                    totalDops: json.totalDops,
+                    mskTimeStr: json.mskTimeStr
+                })
             }
         } catch (e) {
             console.error('Fetch error:', e)
@@ -39,12 +52,32 @@ function App() {
         }
     }
 
+    const getTimeRemaining = (endTimeStr: string) => {
+        const [hours, minutes] = endTimeStr.split(':').map(Number);
+        const now = new Date();
+        const mskOffset = 3 * 60 * 60 * 1000;
+        const mskDate = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + mskOffset);
+
+        let end = new Date(mskDate);
+        end.setHours(hours, minutes, 0, 0);
+
+        if (end < mskDate) {
+            end.setDate(end.getDate() + 1);
+        }
+
+        const diffMs = end.getTime() - mskDate.getTime();
+        const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (diffHrs === 0) return `${diffMins}м`;
+        return `${diffHrs}ч ${diffMins}м`;
+    }
+
     useEffect(() => {
         WebApp.ready()
         WebApp.expand()
         fetchData()
 
-        // Auto-refresh every 30 seconds
         const interval = setInterval(fetchData, 30000)
         return () => clearInterval(interval)
     }, [])
@@ -53,7 +86,7 @@ function App() {
         return (
             <div className="loading-screen">
                 <Activity className="pulse" size={40} />
-                <p>Glow Loading...</p>
+                <p>Loading Dashboard...</p>
             </div>
         )
     }
@@ -69,9 +102,21 @@ function App() {
                     <LayoutDashboard className="icon-main" />
                     <h1>Live Ops Dashboard</h1>
                 </motion.div>
+
+                <div className="stats-container">
+                    <motion.div layout className="stat-item">
+                        <span className="stat-value">{analytics?.totalOnline || 0}</span>
+                        <span className="stat-label">На смене</span>
+                    </motion.div>
+                    <motion.div layout className="stat-item dops">
+                        <span className="stat-value">{analytics?.totalDops || 0}</span>
+                        <span className="stat-label">Допы</span>
+                    </motion.div>
+                </div>
+
                 <div className="status-bar">
                     <Activity size={14} className="pulse" />
-                    <span>Real-time monitoring active</span>
+                    <span>Real-time • {analytics?.mskTimeStr} MSK</span>
                 </div>
             </header>
 
@@ -98,7 +143,7 @@ function App() {
                             <motion.div
                                 className="progress-bar"
                                 initial={{ width: 0 }}
-                                animate={{ width: `${(dept.onlineCount / dept.totalCapacity) * 100}%` }}
+                                animate={{ width: `${Math.min((dept.onlineCount / dept.totalCapacity) * 100, 100)}%` }}
                                 transition={{ duration: 1, ease: "easeOut" }}
                             />
                         </div>
@@ -125,11 +170,19 @@ function App() {
                                                     {emp.name.split(' ').map(n => n[0]).join('')}
                                                 </div>
                                                 <div className="emp-meta">
-                                                    <span className="emp-name">{emp.name}</span>
-                                                    <span className="emp-time">
-                                                        <Clock size={12} />
-                                                        {emp.endTime}
-                                                    </span>
+                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                        <span className="emp-name">{emp.name}</span>
+                                                        {emp.isDop && <span className="badge-dop">ДОП</span>}
+                                                    </div>
+                                                    <div className="emp-time">
+                                                        <div className="time-box">
+                                                            <Clock size={12} />
+                                                            <span>{emp.startTime} - {emp.endTime}</span>
+                                                        </div>
+                                                        <span className="time-remaining">
+                                                            осталось: {getTimeRemaining(emp.endTime)}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </motion.li>
                                         ))}

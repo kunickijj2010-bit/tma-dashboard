@@ -62,6 +62,44 @@
     animation: pulse 2s infinite;
 }
 
+.stats-container {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 0 10px;
+}
+
+.stat-item {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.stat-value {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.stat-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-item.dops .stat-value {
+    color: #00f2ff;
+}
+
 @keyframes pulse {
     0% {
         opacity: 0.4;
@@ -232,7 +270,29 @@
     color: rgba(255, 255, 255, 0.4);
     display: flex;
     align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.time-box {
+    display: flex;
+    align-items: center;
     gap: 4px;
+}
+
+.time-remaining {
+    color: #00f2ff;
+    font-weight: 600;
+}
+
+.badge-dop {
+    font-size: 0.65rem;
+    background: rgba(0, 242, 255, 0.1);
+    color: #00f2ff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 242, 255, 0.2);
+    margin-left: 8px;
 }
 
 .footer {
