@@ -1,11 +1,11 @@
 .app-container {
     width: 100%;
-    max-width: clamp(320px, 95vw, 1400px);
+    max-width: clamp(320px, 95vw, 1600px);
     margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: clamp(16px, 3vh, 32px);
-    padding: clamp(10px, 2vw, 24px);
+    gap: clamp(16px, 4vh, 40px);
+    padding: clamp(12px, 3vw, 40px);
 }
 
 .header {
@@ -122,10 +122,10 @@
     width: 100%;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
     .dashboard-grid {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 24px;
+        grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+        gap: clamp(20px, 3vw, 32px);
     }
 }
 
