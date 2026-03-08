@@ -265,10 +265,10 @@ function App() {
                                                         ({emp.isDop ? 'осталось' : 'до конца'} {getTimeRemaining(emp.endTime)})
                                                     </span>
                                                 </div>
-                                                {emp.isDopToday && !emp.isDop && emp.dopStartTime && (
+                                                {emp.isDopToday && !emp.isDop && (
                                                     <div className="future-dop">
                                                         <Zap size={12} color="#00f2ff" />
-                                                        <span>Будущий доп: <b>{emp.dopStartTime} — {emp.dopEndTime}</b></span>
+                                                        <span>Будущий доп: <b>{emp.dopStartTime ? `${emp.dopStartTime} — ${emp.dopEndTime}` : 'Время уточняется'}</b></span>
                                                     </div>
                                                 )}
                                                 <div className="dop-dept">
