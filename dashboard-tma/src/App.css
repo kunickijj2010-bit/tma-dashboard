@@ -433,7 +433,8 @@
     position: relative;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 160px;
+    min-height: auto;
+    /* Remove fixed height to prevent 'falling' effect */
 }
 
 .dop-report-card:hover {
@@ -484,10 +485,11 @@
 }
 
 .dop-card-body {
-    padding: 20px 24px;
+    padding: 20px 24px 32px 24px;
+    /* More bottom padding for balance */
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
     flex: 1;
 }
 
@@ -520,9 +522,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
+    /* Slightly larger for center-feel */
     color: rgba(255, 255, 255, 0.9);
-    padding: 8px 0;
+    padding: 4px 0;
 }
 
 .dop-dept {
@@ -536,16 +539,18 @@
 }
 
 .future-dop {
-    margin-top: 8px;
-    padding: 8px 12px;
-    background: rgba(0, 242, 255, 0.05);
-    border-radius: 8px;
-    border: 1px dashed rgba(0, 242, 255, 0.2);
+    margin-top: 10px;
+    padding: 12px 16px;
+    background: rgba(0, 242, 255, 0.08);
+    border-radius: 12px;
+    border: 1px dashed rgba(0, 242, 255, 0.3);
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.8rem;
+    gap: 10px;
+    font-size: 0.85rem;
     color: #00f2ff;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 242, 255, 0.1);
 }
 
 .status-dot.cyan {
