@@ -28,7 +28,9 @@ interface Analytics {
 
 function App() {
     const [activeDept, setActiveDept] = useState<string | null>(null)
+    const [showDops, setShowDops] = useState(false)
     const [data, setData] = useState<Department[]>([])
+    const [allEmployees, setAllEmployees] = useState<Employee[]>([])
     const [analytics, setAnalytics] = useState<Analytics | null>(null)
     const [loading, setLoading] = useState(true)
 
@@ -39,6 +41,7 @@ function App() {
 
             if (json.departments) {
                 setData(json.departments)
+                setAllEmployees(json.onlineNow || [])
                 setAnalytics({
                     totalOnline: json.totalOnline,
                     totalDops: json.totalDops,
@@ -91,6 +94,8 @@ function App() {
         )
     }
 
+    const dopsList = allEmployees.filter(e => e.isDop);
+
     return (
         <div className="app-container">
             <header className="header">
@@ -108,9 +113,14 @@ function App() {
                         <span className="stat-value">{analytics?.totalOnline || 0}</span>
                         <span className="stat-label">На смене</span>
                     </motion.div>
-                    <motion.div layout className="stat-item dops">
+                    <motion.div
+                        layout
+                        className="stat-item dops clickable"
+                        onClick={() => setShowDops(true)}
+                    >
                         <span className="stat-value">{analytics?.totalDops || 0}</span>
                         <span className="stat-label">Допы</span>
+                        <div className="click-hint">нажми для деталей</div>
                     </motion.div>
                 </div>
 
@@ -193,6 +203,60 @@ function App() {
                     </motion.div>
                 ))}
             </main>
+
+            <AnimatePresence>
+                {showDops && (
+                    <motion.div
+                        className="modal-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setShowDops(false)}
+                    >
+                        <motion.div
+                            className="modal-content"
+                            initial={{ scale: 0.9, y: 20 }}
+                            animate={{ scale: 1, y: 0 }}
+                            exit={{ scale: 0.9, y: 20 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <div className="modal-header">
+                                <Activity size={20} color="#00f2ff" />
+                                <h2>Дополнительные смены</h2>
+                                <button className="close-btn" onClick={() => setShowDops(false)}>×</button>
+                            </div>
+
+                            <div className="dops-list">
+                                {dopsList.length === 0 ? (
+                                    <p className="no-data">Сейчас нет сотрудников на допе</p>
+                                ) : (
+                                    dopsList.map((emp, i) => (
+                                        <div key={i} className="dop-report-card">
+                                            <div className="dop-card-header">
+                                                <Users size={16} />
+                                                <span>{emp.name}</span>
+                                            </div>
+                                            <div className="dop-card-body">
+                                                <div className="dop-status">
+                                                    <div className="status-dot green" />
+                                                    <span>НА ДОП. СМЕНЕ</span>
+                                                </div>
+                                                <div className="dop-time">
+                                                    <Clock size={14} />
+                                                    <span>{emp.startTime} - {emp.endTime} (осталось {getTimeRemaining(emp.endTime)})</span>
+                                                </div>
+                                                <div className="dop-dept">
+                                                    Отдел: {emp.department}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
             <footer className="footer">
                 <p>Antigravity Swarm • Premium TMA</p>
