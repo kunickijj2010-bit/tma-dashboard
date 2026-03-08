@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import WebApp from '@twa-dev/sdk'
-import { LayoutDashboard, Users, Clock, ChevronRight, Activity } from 'lucide-react'
+import { LayoutDashboard, Users, Clock, ChevronRight, Activity, Zap, Sparkles, Star } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './App.css'
 
@@ -9,6 +9,7 @@ interface Employee {
     startTime: string
     endTime: string
     isDop: boolean
+    isDopToday?: boolean
     department?: string
 }
 
@@ -94,7 +95,7 @@ function App() {
         )
     }
 
-    const dopsList = allEmployees.filter(e => e.isDop);
+    const dopsList = allEmployees.filter(e => e.isDopToday);
 
     return (
         <div className="app-container">
@@ -118,6 +119,7 @@ function App() {
                         className="stat-item dops clickable"
                         onClick={() => setShowDops(true)}
                     >
+                        <Zap className="stat-icon-mini" size={14} />
                         <span className="stat-value">{analytics?.totalDops || 0}</span>
                         <span className="stat-label">Допы</span>
                         <div className="click-hint">нажми для деталей</div>
@@ -221,35 +223,46 @@ function App() {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <div className="modal-header">
-                                <Activity size={20} color="#00f2ff" />
+                                <Sparkles size={20} color="#00f2ff" />
                                 <h2>Дополнительные смены</h2>
                                 <button className="close-btn" onClick={() => setShowDops(false)}>×</button>
                             </div>
 
                             <div className="dops-list">
                                 {dopsList.length === 0 ? (
-                                    <p className="no-data">Сейчас нет сотрудников на допе</p>
+                                    <div className="no-data">
+                                        <Star size={40} opacity={0.2} />
+                                        <p>Сегодня нет доп. смен</p>
+                                    </div>
                                 ) : (
                                     dopsList.map((emp, i) => (
-                                        <div key={i} className="dop-report-card">
+                                        <motion.div
+                                            key={i}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: i * 0.05 }}
+                                            className={`dop-report-card ${emp.isDop ? 'on-dop' : 'on-regular'}`}
+                                        >
                                             <div className="dop-card-header">
-                                                <Users size={16} />
+                                                <div className="dop-icon-wrapper">
+                                                    {emp.isDop ? <Zap size={14} /> : <Users size={14} />}
+                                                </div>
                                                 <span>{emp.name}</span>
                                             </div>
                                             <div className="dop-card-body">
                                                 <div className="dop-status">
-                                                    <div className="status-dot green" />
-                                                    <span>НА ДОП. СМЕНЕ</span>
+                                                    <div className={`status-dot ${emp.isDop ? 'orange' : 'green'}`} />
+                                                    <span>{emp.isDop ? 'НА ДОП. СМЕНЕ' : 'НА СМЕНЕ (Основная)'}</span>
                                                 </div>
                                                 <div className="dop-time">
                                                     <Clock size={14} />
-                                                    <span>{emp.startTime} - {emp.endTime} (осталось {getTimeRemaining(emp.endTime)})</span>
+                                                    <span>{emp.startTime} - {emp.endTime} ({emp.isDop ? 'осталось' : 'до конца'} {getTimeRemaining(emp.endTime)})</span>
                                                 </div>
                                                 <div className="dop-dept">
-                                                    Отдел: {emp.department}
+                                                    {emp.department}
                                                 </div>
                                             </div>
-                                        </div>
+                                        </motion.div>
                                     ))
                                 )}
                             </div>
