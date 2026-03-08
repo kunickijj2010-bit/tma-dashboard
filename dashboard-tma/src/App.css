@@ -425,14 +425,15 @@
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 16px;
-    padding: 1px;
+    padding: 0;
     color: #fff;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
+    min-height: min-content;
 }
 
 .dop-report-card:hover {
@@ -483,10 +484,10 @@
 }
 
 .dop-card-body {
-    padding: 12px 18px;
+    padding: 16px 20px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .dop-status {
@@ -527,7 +528,9 @@
     color: rgba(255, 255, 255, 0.4);
     text-transform: uppercase;
     font-weight: 600;
-    margin-top: 4px;
+    margin-top: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 8px;
 }
 
 .future-dop {
