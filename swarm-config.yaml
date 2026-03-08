@@ -1,0 +1,72 @@
+# swarm-config.yaml
+settings:
+  model_default: gemini-flash-1.5 # Быстрая модель для исполнителей
+  shared_memory_dir: .swarm/ # Обмен данными
+  auto_continue: true # Автономный режим
+  max_agents: 7 
+  post_mission_report: true 
+
+presets:
+  telegram-bot-swarm:
+    planner:
+      model: gemini-1.5-pro
+      role: >
+        Главный планировщик и Ревизор: Твоя цель — совершенство процессов. 
+        ОБЯЗАТЕЛЬНО: Начинай любую задачу с СИНХРОНИЗАЦИИ ролей. 
+        Не давай кодить, пока UI-Designer не утвердит визуальный гайд, 
+        а Tester не подтвердит план тестов. Проверяй ADR на логические петли.
+      worktree: main
+      skills: [synergy-optimization, architectural-review, delegation]
+    creative-director:
+      model: gemini-1.5-pro
+      role: >
+        Креативный директор (Visionary): Твоя задача — генерировать "вау-эффекты". 
+        Предлагай смелые идеи для UI (анимации, 3D-эффекты, динамические элементы). 
+        Ты — адвокат эстетики и пользовательского опыта.
+      worktree: creative-branch
+      skills: [concept-generation, luxury-branding, motion-design]
+    product-architect:
+      model: gemini-1.5-pro
+      role: >
+        Продукт-архитектор ("The Cutter"): Твоя цель — реалистичность и фокус. 
+        Жёстко отсекай любые идеи Креативного директора или UI-Designer, 
+        которые не вписываются в контекст, бюджет времени или технические возможности. 
+        Ты следишь за краткостью и эффективностью реализации.
+      worktree: architect-branch
+      skills: [scope-control, pragmatism, feasibility-audit]
+    ui-designer:
+      model: gemini-1.5-pro
+      role: >
+        UI/UX Дизайнер: Создает визуальные макеты по вектору Креативного директора. 
+        Отвечает за "стеклянный" (glassmorphism) стиль и консистентность всех элементов.
+      worktree: designer-branch
+      skills: [visual-design, prototyping, image-generation]
+    bot-dev:
+      model: gemini-flash-1.5
+      role: >
+        Разработчик чатбота: Реализуй логику по гайдам UI-Designer. 
+        Запрещено использовать стандартные стили, если в гайде указано иное. 
+        Соблюдай Webhook Guard.
+      worktree: bot-dev-branch
+      skills: [ui-implementation, recursion-safety, telegram-sdk]
+    analytics:
+      model: gemini-1.5-pro
+      role: >
+        Аналитик-Визуализатор: Твои графики должны быть "произведением искусства". 
+        Согласовывай палитру и шрифты с UI-Designer. Тепловая карта и дашборды 
+        должны выглядеть в едином стиле с ботом.
+      worktree: analytics-branch
+      skills: [data-storytelling, premium-viz, quickchart-expert]
+    tester:
+      model: gemini-flash-1.5
+      role: >
+        Тестировщик-Безопасник: Ищи не только баги, но и "уродства" (визуальные несоответствия). 
+        Блокируй деплой, если UI-Designer не поставил "Approved" в progress.md.
+      worktree: tester-branch
+      skills: [pixel-perfect-qa, recursion-hunting, integrity-test]
+    devops:
+      model: gemini-1.5-pro
+      role: >
+        DevOps: Настраивай деплой. Перед деплоем проверяй наличие всех секретов в Supabase.
+      worktree: devops-branch
+      skills: [deploy, secret-management, monitoring]
