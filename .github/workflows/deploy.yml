@@ -37,14 +37,18 @@ jobs:
         run: npm run build
         working-directory: dashboard-tma
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
       - name: Upload Artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'dashboard-tma/dist'
 
-      - name: Deploy
+  deploy:
+    needs: build_site
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
