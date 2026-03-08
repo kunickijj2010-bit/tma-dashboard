@@ -5,12 +5,14 @@ import { motion, AnimatePresence } from 'framer-motion'
 import './App.css'
 
 interface Employee {
-    name: string
-    startTime: string
-    endTime: string
-    isDop: boolean
-    isDopToday?: boolean
-    department?: string
+    name: string;
+    startTime: string;
+    endTime: string;
+    isDop: boolean;
+    isDopToday?: boolean;
+    department?: string;
+    dopStartTime?: string | null;
+    dopEndTime?: string | null;
 }
 
 interface Department {
@@ -251,16 +253,24 @@ function App() {
                                             </div>
                                             <div className="dop-card-body">
                                                 <div className="dop-status">
-                                                    <div className={`status-dot ${emp.isDop ? 'orange' : 'green'}`} />
-                                                    <span>{emp.isDop ? 'НА ДОП. СМЕНЕ' : 'НА СМЕНЕ (Основная)'}</span>
+                                                    <div className={`status-dot ${emp.isDop ? 'orange' : emp.isDopToday ? 'cyan' : 'green'}`} />
+                                                    <span>
+                                                        {emp.isDop ? 'НА ДОП. СМЕНЕ' : emp.isDopToday ? 'ОСНОВНАЯ (Скоро Доп)' : 'НА СМЕНЕ (Основная)'}
+                                                    </span>
                                                 </div>
                                                 <div className="dop-time">
                                                     <Clock size={14} />
                                                     <span style={{ fontWeight: 600 }}>{emp.startTime} — {emp.endTime}</span>
-                                                    <span style={{ color: '#888', marginLeft: '4px' }}>
+                                                    <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: '4px' }}>
                                                         ({emp.isDop ? 'осталось' : 'до конца'} {getTimeRemaining(emp.endTime)})
                                                     </span>
                                                 </div>
+                                                {emp.isDopToday && !emp.isDop && emp.dopStartTime && (
+                                                    <div className="future-dop">
+                                                        <Zap size={12} color="#00f2ff" />
+                                                        <span>Будущий доп: <b>{emp.dopStartTime} — {emp.dopEndTime}</b></span>
+                                                    </div>
+                                                )}
                                                 <div className="dop-dept">
                                                     {emp.department}
                                                 </div>
