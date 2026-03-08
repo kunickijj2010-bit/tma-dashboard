@@ -256,7 +256,10 @@ function App() {
                                                 </div>
                                                 <div className="dop-time">
                                                     <Clock size={14} />
-                                                    <span>{emp.startTime} - {emp.endTime} ({emp.isDop ? 'осталось' : 'до конца'} {getTimeRemaining(emp.endTime)})</span>
+                                                    <span style={{ fontWeight: 600 }}>{emp.startTime} — {emp.endTime}</span>
+                                                    <span style={{ color: '#888', marginLeft: '4px' }}>
+                                                        ({emp.isDop ? 'осталось' : 'до конца'} {getTimeRemaining(emp.endTime)})
+                                                    </span>
                                                 </div>
                                                 <div className="dop-dept">
                                                     {emp.department}
@@ -275,7 +278,7 @@ function App() {
                 <p>Antigravity Swarm • Premium TMA</p>
             </footer>
         </div>
-    )
+    );
 }
 
-export default App
+export default App;
