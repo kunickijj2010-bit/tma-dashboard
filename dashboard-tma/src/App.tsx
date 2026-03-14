@@ -15,6 +15,56 @@ interface Employee {
     dopEndTime?: string | null;
 }
 
+const Timeline = ({ shifts, currentMins }: { shifts: Employee[], currentMins: number }) => {
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    
+    // Convert time HH:mm to minutes from midnight
+    const toMins = (time: string) => {
+        const [h, m] = time.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    return (
+        <div className="timeline-wrapper">
+            <div className="timeline-grid">
+                {hours.map(h => (
+                    <div key={h} className="timeline-hour-mark">
+                        <span>{h}</span>
+                    </div>
+                ))}
+            </div>
+            <div className="timeline-bars-container">
+                {shifts.map((emp, i) => {
+                    const start = toMins(emp.startTime);
+                    let end = toMins(emp.endTime);
+                    if (end <= start) end += 1440; // Overnight
+
+                    const left = (start / 1440) * 100;
+                    const width = ((end - start) / 1440) * 100;
+
+                    return (
+                        <div 
+                            key={i} 
+                            className={`timeline-bar ${emp.isDop ? 'dop' : 'regular'}`}
+                            style={{ 
+                                left: `${left}%`, 
+                                width: `${width}%`,
+                                top: `${i * 12}px` 
+                            }}
+                            title={`${emp.name}: ${emp.startTime}-${emp.endTime}`}
+                        />
+                    );
+                })}
+                {/* Current Time Indicator */}
+                <div 
+                    className="timeline-now-indicator"
+                    style={{ left: `${(currentMins / 1440) * 100}%` }}
+                />
+            </div>
+        </div>
+    );
+};
+
 interface Department {
     id: string
     name: string
@@ -34,7 +84,9 @@ function App() {
     const [showDops, setShowDops] = useState(false)
     const [data, setData] = useState<Department[]>([])
     const [allEmployees, setAllEmployees] = useState<Employee[]>([])
+    const [allDayShifts, setAllDayShifts] = useState<Employee[]>([])
     const [analytics, setAnalytics] = useState<Analytics | null>(null)
+    const [currentMins, setCurrentMins] = useState(0)
     const [loading, setLoading] = useState(true)
 
     const fetchData = async () => {
@@ -45,6 +97,12 @@ function App() {
             if (json.departments) {
                 setData(json.departments)
                 setAllEmployees(json.onlineNow || [])
+                setAllDayShifts(json.allDayShifts || [])
+                
+                // Calculate current MSK minutes for the timeline indicator
+                const [h, m] = (json.mskTimeStr || "00:00").split(':').map(Number);
+                setCurrentMins(h * 60 + m);
+
                 setAnalytics({
                     totalOnline: json.totalOnline,
                     totalDops: json.totalDops,
@@ -161,6 +219,11 @@ function App() {
                                 transition={{ duration: 1, ease: "easeOut" }}
                             />
                         </div>
+
+                        <Timeline 
+                            shifts={allDayShifts.filter(s => s.department === dept.name)} 
+                            currentMins={currentMins}
+                        />
 
                         <AnimatePresence>
                             {activeDept === dept.id && (dept.employees || []).length > 0 && (
