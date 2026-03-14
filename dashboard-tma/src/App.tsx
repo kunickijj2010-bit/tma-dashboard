@@ -15,7 +15,7 @@ interface Employee {
     dopEndTime?: string | null;
 }
 
-const Timeline = ({ shifts, currentMins }: { shifts: Employee[], currentMins: number }) => {
+const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], currentMins: number, showIndicator: boolean }) => {
     const hours = Array.from({ length: 24 }, (_, i) => i);
     
     // Convert time HH:mm to minutes from midnight
@@ -23,6 +23,9 @@ const Timeline = ({ shifts, currentMins }: { shifts: Employee[], currentMins: nu
         const [h, m] = time.split(':').map(Number);
         return h * 60 + m;
     };
+
+    // Calculate dynamic height: 14px per bar + some padding
+    const containerHeight = Math.max(40, shifts.length * 14 + 10);
 
     return (
         <div className="timeline-wrapper">
@@ -33,7 +36,7 @@ const Timeline = ({ shifts, currentMins }: { shifts: Employee[], currentMins: nu
                     </div>
                 ))}
             </div>
-            <div className="timeline-bars-container">
+            <div className="timeline-bars-container" style={{ height: `${containerHeight}px` }}>
                 {shifts.map((emp, i) => {
                     const start = toMins(emp.startTime);
                     let end = toMins(emp.endTime);
@@ -49,17 +52,19 @@ const Timeline = ({ shifts, currentMins }: { shifts: Employee[], currentMins: nu
                             style={{ 
                                 left: `${left}%`, 
                                 width: `${width}%`,
-                                top: `${i * 12}px` 
+                                top: `${i * 14}px` 
                             }}
                             title={`${emp.name}: ${emp.startTime}-${emp.endTime}`}
                         />
                     );
                 })}
                 {/* Current Time Indicator */}
-                <div 
-                    className="timeline-now-indicator"
-                    style={{ left: `${(currentMins / 1440) * 100}%` }}
-                />
+                {showIndicator && (
+                    <div 
+                        className="timeline-now-indicator"
+                        style={{ left: `${(currentMins / 1440) * 100}%` }}
+                    />
+                )}
             </div>
         </div>
     );
@@ -89,6 +94,13 @@ function App() {
     const [currentMins, setCurrentMins] = useState(0)
     const [loading, setLoading] = useState(true)
 
+    const isPremiumMode = () => {
+        const url = window.location.href;
+        const search = window.location.search;
+        const hash = window.location.hash;
+        return url.includes('view=premium') || search.includes('view=premium') || hash.includes('view=premium');
+    }
+
     const fetchData = async () => {
         try {
             const resp = await fetch('https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/telegram-bot?format=json')
@@ -108,6 +120,11 @@ function App() {
                     totalDops: json.totalDops,
                     mskTimeStr: json.mskTimeStr
                 })
+                
+                // Debug log for view param
+                console.log('App Loaded. View Search:', new URLSearchParams(window.location.search).get('view'));
+                console.log('App Loaded. View Hash:', new URLSearchParams(window.location.hash.split('?')[1]).get('view'));
+                console.log('Is Premium Mode:', isPremiumMode());
             }
         } catch (e) {
             console.error('Fetch error:', e)
@@ -177,7 +194,16 @@ function App() {
                     <motion.div
                         layout
                         className="stat-item dops clickable"
-                        onClick={() => setShowDops(true)}
+                        style={{ cursor: 'pointer', zIndex: 100, position: 'relative', pointerEvents: 'auto' }}
+                        onTap={() => {
+                            console.log('Dops Tapped');
+                            setShowDops(true);
+                        }}
+                        onClick={(e) => {
+                            console.log('Dops Clicked');
+                            e.stopPropagation();
+                            setShowDops(true);
+                        }}
                     >
                         <Zap className="stat-icon-mini" size={14} />
                         <span className="stat-value">{analytics?.totalDops || 0}</span>
@@ -220,10 +246,13 @@ function App() {
                             />
                         </div>
 
-                        <Timeline 
-                            shifts={allDayShifts.filter(s => s.department === dept.name)} 
-                            currentMins={currentMins}
-                        />
+                        {!isPremiumMode() && (
+                            <Timeline 
+                                shifts={allDayShifts.filter(s => s.department === dept.name)} 
+                                currentMins={currentMins}
+                                showIndicator={true}
+                            />
+                        )}
 
                         <AnimatePresence>
                             {activeDept === dept.id && (dept.employees || []).length > 0 && (
@@ -280,13 +309,14 @@ function App() {
                         exit={{ opacity: 0 }}
                         onClick={() => setShowDops(false)}
                     >
-                        <motion.div
-                            className="modal-content"
-                            initial={{ scale: 0.9, y: 20 }}
-                            animate={{ scale: 1, y: 0 }}
-                            exit={{ scale: 0.9, y: 20 }}
-                            onClick={(e) => e.stopPropagation()}
-                        >
+                             <motion.div
+                                className="modal-content"
+                                initial={{ scale: 0.8, y: 50, opacity: 0 }}
+                                animate={{ scale: 1, y: 0, opacity: 1 }}
+                                exit={{ scale: 0.8, y: 50, opacity: 0 }}
+                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                                onClick={(e) => e.stopPropagation()}
+                            >
                             <div className="modal-header">
                                 <Sparkles size={20} color="#00f2ff" />
                                 <h2>Дополнительные смены</h2>
@@ -348,7 +378,8 @@ function App() {
             </AnimatePresence>
 
             <footer className="footer">
-                <p>Antigravity Swarm • Premium TMA</p>
+                <p>Antigravity Swarm • v3.1.2-FORCE</p>
+                <p style={{ fontSize: '0.6rem', opacity: 0.3 }}>Ref: {window.location.href.split('?')[1] || 'no-query'}</p>
             </footer>
         </div>
     );

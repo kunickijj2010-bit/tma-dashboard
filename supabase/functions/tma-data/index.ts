@@ -98,9 +98,33 @@ serve(async (req) => {
                 const empShifts = shiftMap[emp.id] || [];
                 const ts = empShifts.find((s: any) => s.shift_date === todayStr);
                 const noteText = ts?.shift_note || "";
+
+                const workHours = emp.work_hours || "09:00-18:00";
+                const match = workHours.match(/(\d{1,2})[:\.]?(\d{2})?\s*-\s*(\d{1,2})[:\.]?(\d{2})?/);
+                let startMins = 540, endMins = 1080;
+                if (match) {
+                    startMins = parseInt(match[1]) * 60 + parseInt(match[2] || "0");
+                    endMins = parseInt(match[3]) * 60 + parseInt(match[4] || "0");
+                }
+
+                let e = endMins;
                 const rangeMatch = noteText.match(/\b(\d{1,2})(?:[:\.](\d{2}))?\s*[-–—]\s*(\d{1,2})(?:[:\.](\d{2}))?\b/);
-                let e = 1080;
-                if (rangeMatch) e = parseInt(rangeMatch[3]) * 60 + parseInt(rangeMatch[4] || "0");
+                const ruMatch = noteText.match(/\b(?:с|c)\s*(\d{1,2})(?:[:\.](\d{2}))?\s*(?:до|по)\s*(\d{1,2})(?:[:\.](\d{2}))?\b/i);
+
+                if (rangeMatch) {
+                    e = parseInt(rangeMatch[3]) * 60 + parseInt(rangeMatch[4] || "0");
+                } else if (ruMatch) {
+                    e = parseInt(ruMatch[3]) * 60 + parseInt(ruMatch[4] || "0");
+                } else if (ts) {
+                    let hoursWorked = ts.hours_worked;
+                    let isPartial = hoursWorked < 8 || noteText.toLowerCase().includes("доп");
+                    if (isPartial) {
+                        e = startMins + (hoursWorked * 60);
+                    } else if (e <= startMins) {
+                        e += 1440;
+                    }
+                }
+
                 const endH = Math.floor(e / 60) % 24;
                 const endM = e % 60;
                 return {

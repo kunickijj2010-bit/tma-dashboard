@@ -102,16 +102,19 @@
 }
 
 .stat-item.clickable {
-    cursor: pointer;
-    transition: all 0.2s ease;
+    cursor: pointer !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    touch-action: manipulation;
+    z-index: 10;
 }
 
 .stat-item.clickable:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(0, 242, 255, 0.4);
-    transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(0, 242, 255, 0.6);
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 5px 15px rgba(0, 242, 255, 0.2);
 }
 
 .click-hint {
@@ -147,6 +150,22 @@
     100% {
         opacity: 0.4;
     }
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 9999;
 }
 
 .dashboard-grid {
@@ -364,9 +383,10 @@
 }
 
 .timeline-bars-container {
-    height: 40px;
+    min-height: 40px;
     position: relative;
     margin-top: 8px;
+    transition: height 0.3s ease;
 }
 
 .timeline-bar {
