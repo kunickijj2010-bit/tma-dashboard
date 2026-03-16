@@ -5,17 +5,21 @@ import { motion, AnimatePresence } from 'framer-motion'
 import './App.css'
 
 interface Employee {
+    id?: number;
     name: string;
+    department?: string;
     startTime: string;
     endTime: string;
     isDop: boolean;
     isDopToday?: boolean;
-    department?: string;
     dopStartTime?: string | null;
     dopEndTime?: string | null;
+    workHours?: string;
+    location?: string;
+    competencies?: Record<string, string>;
 }
 
-const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], currentMins: number, showIndicator: boolean }) => {
+const Timeline = ({ shifts, currentMins, showIndicator, onEmployeeClick }: { shifts: Employee[], currentMins: number, showIndicator: boolean, onEmployeeClick: (emp: Employee) => void }) => {
     const [activeEmp, setActiveEmp] = useState<Employee | null>(null);
     const hours = Array.from({ length: 24 }, (_, i) => i);
     const isDesktop = typeof window !== 'undefined' ? window.matchMedia('(hover: hover)').matches : true;
@@ -58,7 +62,7 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
                                 onMouseLeave={() => isDesktop && setActiveEmp(null)}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setActiveEmp(activeEmp?.name === emp.name ? null : emp);
+                                    onEmployeeClick(emp);
                                 }}
                                 whileTap={{ scale: 0.98 }}
                             />
@@ -119,9 +123,87 @@ interface Analytics {
     mskTimeStr: string
 }
 
+const EmployeeProfileModal = ({ emp, onClose }: { emp: Employee, onClose: () => void }) => {
+    const systems = [
+        "Amadeus", "Ctrip", "Farel API", "FareLogix", "FlyOne API", "GDS Avtra", 
+        "GDS Cockpit", "Mixvel [Sirena]", "NDC Aeroflot", "NDC AirArabia", "NDC Ajet", 
+        "NDC Emirates", "NDC FlyArystan", "NDC FlyDubai", "NDC FlyNas", "NDC FlyOne", 
+        "NDC Pegasus", "NDC S7", "NDC Tais", "NDC Tais UT", "NDC TezJet", 
+        "NDC Turkish Airlines", "NDC U6", "Pobeda API", "UAPI", "Альтея", "Сирена", "Сирена-П"
+    ];
+
+    return (
+        <motion.div 
+            className="modal-overlay profile-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+        >
+            <motion.div 
+                className="profile-modal"
+                initial={{ y: "100%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <div className="profile-header">
+                    <div className="profile-avatar">
+                        <Users size={32} />
+                    </div>
+                    <div className="profile-info">
+                        <h2>{emp.name}</h2>
+                        <span className="profile-dept">{emp.department}</span>
+                    </div>
+                    <button className="close-btn" onClick={onClose}>×</button>
+                </div>
+
+                <div className="profile-body">
+                    <div className="info-grid">
+                        <div className="info-block">
+                            <Clock size={16} />
+                            <div>
+                                <label>График</label>
+                                <span>{emp.startTime} — {emp.endTime}</span>
+                            </div>
+                        </div>
+                        {emp.location && (
+                            <div className="info-block">
+                                <Sparkles size={16} />
+                                <div>
+                                    <label>Локация</label>
+                                    <span>{emp.location}</span>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="competencies-section">
+                        <h3>Композиция навыков</h3>
+                        <div className="competencies-grid">
+                            {systems.map(sys => {
+                                const level = emp.competencies?.[sys];
+                                const isActive = !!level;
+                                return (
+                                    <div key={sys} className={`comp-item ${isActive ? 'active' : ''}`}>
+                                        <div className="comp-name">{sys}</div>
+                                        <div className="comp-level">{level || '-'}</div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
 function App() {
     const [activeDept, setActiveDept] = useState<string | null>(null)
-    const [showDops, setShowDops] = useState(false)
+    const [showDops, setShowDops] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
     const [data, setData] = useState<Department[]>([])
     const [allEmployees, setAllEmployees] = useState<Employee[]>([])
     const [allDayShifts, setAllDayShifts] = useState<Employee[]>([])
@@ -286,6 +368,10 @@ function App() {
                                 shifts={allDayShifts.filter(s => s.department === dept.name)} 
                                 currentMins={currentMins}
                                 showIndicator={true}
+                                onEmployeeClick={(emp) => {
+                                    const fullEmp = allEmployees.find(e => e.name === emp.name) || emp;
+                                    setSelectedEmployee(fullEmp);
+                                }}
                             />
                         )}
 
@@ -373,6 +459,7 @@ function App() {
                                                 animate={{ opacity: 1, scale: 1 }}
                                                 transition={{ delay: i * 0.05 }}
                                                 className="dops-card"
+                                                onClick={() => setSelectedEmployee(emp)}
                                             >
                                                 <div className="dops-card-header">
                                                     <span className="dops-card-name">{emp.name}</span>
