@@ -399,7 +399,7 @@ function App() {
             </AnimatePresence>
 
             <footer className="footer">
-                <p>Antigravity Swarm • v3.1.5-UX</p>
+                <p>Antigravity Swarm • v3.1.7-ULTIMATE-UX</p>
                 <p style={{ fontSize: '0.6rem', opacity: 0.3 }}>Build: {new Date().toLocaleString('ru-RU')} | Ref: {window.location.href.split('?')[1] || 'no-query'}</p>
             </footer>
         </div>

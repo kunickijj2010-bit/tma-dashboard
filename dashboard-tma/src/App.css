@@ -234,22 +234,23 @@
 }
 
 .timeline-tooltip {
-    position: fixed;
-    top: 60px; /* Фиксировано сверху для видимости */
-    left: 50%;
-    transform: translateX(-50%);
-    background: #0f172a; /* Очень темный для контраста */
-    border: 3px solid var(--primary-cyan);
-    padding: 16px 24px;
-    border-radius: 16px;
-    z-index: 10000;
-    width: 90%;
-    max-width: 400px;
-    box-shadow: 0 0 50px rgba(0, 242, 255, 0.4), 0 20px 40px rgba(0, 0, 0, 0.8);
+    position: fixed !important;
+    top: 70px !important; /* Чуть ниже шапки */
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: #0a0f1e !important; /* Почти черный для контраста */
+    border: 3px solid var(--primary-cyan) !important;
+    padding: 18px 28px !important;
+    border-radius: 20px !important;
+    z-index: 99999 !important;
+    width: auto !important;
+    min-width: 300px !important;
+    max-width: 90vw !important;
+    box-shadow: 0 0 60px rgba(0, 242, 255, 0.5), 0 30px 60px rgba(0, 0, 0, 0.9) !important;
     text-align: center;
-    backdrop-filter: blur(20px);
-    color: #ffffff; /* Чистый белый */
-    pointer-events: auto;
+    backdrop-filter: blur(25px) !important;
+    color: #ffffff !important;
+    pointer-events: auto !important;
 }
 
 /* На мобильных чуть ниже, чтобы не перекрывать заголовок */
