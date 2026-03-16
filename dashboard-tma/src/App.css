@@ -263,16 +263,29 @@
 
 .tooltip-name {
     display: block;
-    font-weight: 700;
-    font-size: 0.9rem;
-    margin-bottom: 4px;
-    white-space: nowrap;
+    font-size: 1.35rem; /* Значительно крупнее */
+    font-weight: 800;
+    color: #ffffff !important;
+    margin-bottom: 6px;
+    letter-spacing: -0.5px;
 }
 
 .tooltip-time {
     display: block;
+    font-size: 1.1rem;
+    color: var(--primary-cyan);
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.tooltip-hint {
+    margin-top: 10px;
     font-size: 0.8rem;
-    opacity: 0.8;
+    color: #ffffff;
+    opacity: 0.5;
+    font-weight: 500;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 8px;
 }
 
 .dashboard-grid {

@@ -16,7 +16,7 @@ interface Employee {
 }
 
 const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], currentMins: number, showIndicator: boolean }) => {
-    const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
+    const [activeEmp, setActiveEmp] = useState<Employee | null>(null);
     const hours = Array.from({ length: 24 }, (_, i) => i);
     const isDesktop = typeof window !== 'undefined' ? window.matchMedia('(hover: hover)').matches : true;
     
@@ -44,7 +44,6 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
 
                     const left = (start / 1440) * 100;
                     const width = ((end - start) / 1440) * 100;
-                    const barId = `${emp.name}-${i}`;
 
                     return (
                         <div key={i} className="timeline-row-container" style={{ top: `${i * 14}px`, height: '14px', position: 'absolute', width: '100%' }}>
@@ -55,30 +54,14 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
                                     width: `${width}%`,
                                     position: 'absolute'
                                 }}
-                                onMouseEnter={() => isDesktop && setActiveTooltip(barId)}
-                                onMouseLeave={() => isDesktop && setActiveTooltip(null)}
+                                onMouseEnter={() => isDesktop && setActiveEmp(emp)}
+                                onMouseLeave={() => isDesktop && setActiveEmp(null)}
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setActiveTooltip(activeTooltip === barId ? null : barId);
+                                    setActiveEmp(activeEmp?.name === emp.name ? null : emp);
                                 }}
                                 whileTap={{ scale: 0.98 }}
-                            >
-                                <AnimatePresence>
-                                    {activeTooltip === barId && (
-                                        <motion.div 
-                                            className="timeline-tooltip"
-                                            initial={{ opacity: 0, scale: 0.8 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.8 }}
-                                            onClick={(e) => !isDesktop && (e.stopPropagation(), setActiveTooltip(null))}
-                                        >
-                                            <span className="tooltip-name">{emp.name}</span>
-                                            <span className="tooltip-time">{emp.startTime} — {emp.endTime}</span>
-                                            {!isDesktop && <div style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '8px' }}>Нажмите, чтобы закрыть</div>}
-                                        </motion.div>
-                                    )}
-                                </AnimatePresence>
-                            </motion.div>
+                            />
                         </div>
                     );
                 })}
@@ -90,11 +73,32 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
                     />
                 )}
             </div>
-            {/* Глобальный оверлей для закрытия тултипа на мобильных */}
-            {!isDesktop && activeTooltip && (
+
+            {/* Глобальный Тултип: Вынесен за пределы контейнеров с трансформацией */}
+            <AnimatePresence>
+                {activeEmp && (
+                    <motion.div 
+                        className="timeline-tooltip"
+                        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveEmp(null);
+                        }}
+                    >
+                        <div className="tooltip-name">{activeEmp.name}</div>
+                        <div className="tooltip-time">{activeEmp.startTime} — {activeEmp.endTime}</div>
+                        <div className="tooltip-hint">{isDesktop ? 'Наведите на другой график' : 'Нажмите, чтобы закрыть'}</div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Глобальный оверлей для закрытия на мобильных */}
+            {!isDesktop && activeEmp && (
                 <div 
                     style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }} 
-                    onClick={() => setActiveTooltip(null)} 
+                    onClick={() => setActiveEmp(null)} 
                 />
             )}
         </div>
