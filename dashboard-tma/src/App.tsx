@@ -16,6 +16,7 @@ interface Employee {
 }
 
 const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], currentMins: number, showIndicator: boolean }) => {
+    const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
     const hours = Array.from({ length: 24 }, (_, i) => i);
     
     // Convert time HH:mm to minutes from midnight
@@ -44,18 +45,35 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
 
                     const left = (start / 1440) * 100;
                     const width = ((end - start) / 1440) * 100;
+                    const barId = `${emp.name}-${i}`;
 
                     return (
-                        <div 
-                            key={i} 
-                            className={`timeline-bar ${emp.isDop ? 'dop' : 'regular'}`}
-                            style={{ 
-                                left: `${left}%`, 
-                                width: `${width}%`,
-                                top: `${i * 14}px` 
-                            }}
-                            title={`${emp.name}: ${emp.startTime}-${emp.endTime}`}
-                        />
+                        <div key={i} className="timeline-row-container" style={{ top: `${i * 14}px`, height: '14px', position: 'absolute', width: '100%' }}>
+                            <motion.div 
+                                className={`timeline-bar ${emp.isDop ? 'dop' : 'regular'}`}
+                                style={{ 
+                                    left: `${left}%`, 
+                                    width: `${width}%`,
+                                    position: 'absolute'
+                                }}
+                                onClick={() => setActiveTooltip(activeTooltip === barId ? null : barId)}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                <AnimatePresence>
+                                    {activeTooltip === barId && (
+                                        <motion.div 
+                                            className="timeline-tooltip"
+                                            initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                                        >
+                                            <span className="tooltip-name">{emp.name}</span>
+                                            <span className="tooltip-time">{emp.startTime} — {emp.endTime}</span>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        </div>
                     );
                 })}
                 {/* Current Time Indicator */}
@@ -330,46 +348,32 @@ function App() {
                                         <p>Сегодня нет доп. смен</p>
                                     </div>
                                 ) : (
-                                    dopsList.map((emp, i) => (
-                                        <motion.div
-                                            key={i}
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: i * 0.05 }}
-                                            className={`dop-report-card ${emp.isDop ? 'on-dop' : 'on-regular'}`}
-                                        >
-                                            <div className="dop-card-header">
-                                                <div className="dop-icon-wrapper">
-                                                    {emp.isDop ? <Zap size={14} /> : <Users size={14} />}
+                                    <div className="dops-card-list">
+                                        {dopsList.map((emp, i) => (
+                                            <motion.div
+                                                key={i}
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                transition={{ delay: i * 0.05 }}
+                                                className="dops-card"
+                                            >
+                                                <div className="dops-card-header">
+                                                    <span className="dops-card-name">{emp.name}</span>
+                                                    <span className="dops-card-dept">{emp.department}</span>
                                                 </div>
-                                                <span>{emp.name}</span>
-                                            </div>
-                                            <div className="dop-card-body">
-                                                <div className="dop-status">
-                                                    <div className={`status-dot ${emp.isDop ? 'orange' : emp.isDopToday ? 'cyan' : 'green'}`} />
-                                                    <span>
-                                                        {emp.isDop ? 'НА ДОП. СМЕНЕ' : emp.isDopToday ? 'ОСНОВНАЯ (Скоро Доп)' : 'НА СМЕНЕ (Основная)'}
+                                                <div className="dops-card-time">
+                                                    <Clock size={16} opacity={0.6} />
+                                                    <span>{emp.startTime} — {emp.endTime}</span>
+                                                    <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>
+                                                        ({emp.isDop ? 'осталось' : 'через'} {getTimeRemaining(emp.endTime)})
                                                     </span>
                                                 </div>
-                                                <div className="dop-time">
-                                                    <Clock size={14} />
-                                                    <span style={{ fontWeight: 600 }}>{emp.startTime} — {emp.endTime}</span>
-                                                    <span style={{ color: 'rgba(255,255,255,0.5)', marginLeft: '4px' }}>
-                                                        ({emp.isDop ? 'осталось' : 'до конца'} {getTimeRemaining(emp.endTime)})
-                                                    </span>
+                                                <div className="dops-card-status">
+                                                    {emp.isDop ? '⚡ НА ДОП. СМЕНЕ' : '🕒 Будущий доп'}
                                                 </div>
-                                                {emp.isDopToday && !emp.isDop && (
-                                                    <div className="future-dop">
-                                                        <Zap size={12} color="#00f2ff" />
-                                                        <span>Будущий доп: <b>{emp.dopStartTime ? `${emp.dopStartTime} — ${emp.dopEndTime}` : 'Время уточняется'}</b></span>
-                                                    </div>
-                                                )}
-                                                <div className="dop-dept">
-                                                    {emp.department}
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ))
+                                            </motion.div>
+                                        ))}
+                                    </div>
                                 )}
                             </div>
                         </motion.div>

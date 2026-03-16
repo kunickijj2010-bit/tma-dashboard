@@ -158,14 +158,110 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(15px) saturate(160%);
+    -webkit-backdrop-filter: blur(15px) saturate(160%);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     z-index: 9999;
+}
+
+.modal-content {
+    background: rgba(20, 24, 35, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 450px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 24px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.dops-card-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.dops-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 16px;
+    transition: transform 0.2s ease;
+}
+
+.dops-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.dops-card-dept {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--primary-cyan);
+    background: rgba(0, 242, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.dops-card-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: white;
+}
+
+.dops-card-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.dops-card-status {
+    font-size: 0.8rem;
+    color: var(--primary-cyan);
+    margin-top: 4px;
+}
+
+.timeline-tooltip {
+    position: absolute;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(0, 242, 255, 0.3);
+    padding: 10px 14px;
+    border-radius: 12px;
+    z-index: 10000;
+    min-width: 180px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+    text-align: center;
+    backdrop-filter: blur(8px);
+}
+
+.tooltip-name {
+    display: block;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin-bottom: 4px;
+    white-space: nowrap;
+}
+
+.tooltip-time {
+    display: block;
+    font-size: 0.8rem;
+    opacity: 0.8;
 }
 
 .dashboard-grid {
