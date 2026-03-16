@@ -58,10 +58,8 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
                                 onMouseEnter={() => isDesktop && setActiveTooltip(barId)}
                                 onMouseLeave={() => isDesktop && setActiveTooltip(null)}
                                 onClick={(e) => {
-                                    if (!isDesktop) {
-                                        e.stopPropagation();
-                                        setActiveTooltip(activeTooltip === barId ? null : barId);
-                                    }
+                                    e.stopPropagation();
+                                    setActiveTooltip(activeTooltip === barId ? null : barId);
                                 }}
                                 whileTap={{ scale: 0.98 }}
                             >
