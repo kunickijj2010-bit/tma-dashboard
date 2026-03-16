@@ -234,37 +234,30 @@
 }
 
 .timeline-tooltip {
-    position: absolute;
-    bottom: 25px;
+    position: fixed;
+    top: 60px; /* Фиксировано сверху для видимости */
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(30, 41, 59, 0.98);
-    border: 1px solid rgba(0, 242, 255, 0.5);
-    padding: 12px 16px;
-    border-radius: 12px;
+    background: #0f172a; /* Очень темный для контраста */
+    border: 3px solid var(--primary-cyan);
+    padding: 16px 24px;
+    border-radius: 16px;
     z-index: 10000;
-    min-width: 200px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-    pointer-events: none;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 0 50px rgba(0, 242, 255, 0.4), 0 20px 40px rgba(0, 0, 0, 0.8);
     text-align: center;
-    backdrop-filter: blur(12px);
-    color: white;
+    backdrop-filter: blur(20px);
+    color: #ffffff; /* Чистый белый */
+    pointer-events: auto;
 }
 
-/* Мобильная версия: Центрирование по экрану */
+/* На мобильных чуть ниже, чтобы не перекрывать заголовок */
 @media (max-width: 600px) {
     .timeline-tooltip {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        bottom: auto;
-        transform: translate(-50%, -50%);
-        width: 80%;
-        max-width: 300px;
-        background: rgba(15, 20, 30, 0.95);
-        border: 2px solid var(--primary-cyan);
-        box-shadow: 0 0 50px rgba(0, 242, 255, 0.2);
-        pointer-events: auto; /* Позволяем закрыть по клику на оверлей или саму подсказку */
+        top: 80px;
+        width: 92%;
+        border-width: 2px;
     }
 }
 
