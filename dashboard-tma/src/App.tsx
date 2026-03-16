@@ -18,14 +18,13 @@ interface Employee {
 const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], currentMins: number, showIndicator: boolean }) => {
     const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
     const hours = Array.from({ length: 24 }, (_, i) => i);
+    const isDesktop = typeof window !== 'undefined' ? window.matchMedia('(hover: hover)').matches : true;
     
-    // Convert time HH:mm to minutes from midnight
     const toMins = (time: string) => {
         const [h, m] = time.split(':').map(Number);
         return h * 60 + m;
     };
 
-    // Calculate dynamic height: 14px per bar + some padding
     const containerHeight = Math.max(40, shifts.length * 14 + 10);
 
     return (
@@ -41,7 +40,7 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
                 {shifts.map((emp, i) => {
                     const start = toMins(emp.startTime);
                     let end = toMins(emp.endTime);
-                    if (end <= start) end += 1440; // Overnight
+                    if (end <= start) end += 1440; 
 
                     const left = (start / 1440) * 100;
                     const width = ((end - start) / 1440) * 100;
@@ -56,19 +55,28 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
                                     width: `${width}%`,
                                     position: 'absolute'
                                 }}
-                                onClick={() => setActiveTooltip(activeTooltip === barId ? null : barId)}
+                                onMouseEnter={() => isDesktop && setActiveTooltip(barId)}
+                                onMouseLeave={() => isDesktop && setActiveTooltip(null)}
+                                onClick={(e) => {
+                                    if (!isDesktop) {
+                                        e.stopPropagation();
+                                        setActiveTooltip(activeTooltip === barId ? null : barId);
+                                    }
+                                }}
                                 whileTap={{ scale: 0.98 }}
                             >
                                 <AnimatePresence>
                                     {activeTooltip === barId && (
                                         <motion.div 
                                             className="timeline-tooltip"
-                                            initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.9 }}
+                                            initial={{ opacity: 0, scale: 0.8 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            exit={{ opacity: 0, scale: 0.8 }}
+                                            onClick={(e) => !isDesktop && (e.stopPropagation(), setActiveTooltip(null))}
                                         >
                                             <span className="tooltip-name">{emp.name}</span>
                                             <span className="tooltip-time">{emp.startTime} — {emp.endTime}</span>
+                                            {!isDesktop && <div style={{ fontSize: '0.7rem', opacity: 0.5, marginTop: '8px' }}>Нажмите, чтобы закрыть</div>}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -84,6 +92,13 @@ const Timeline = ({ shifts, currentMins, showIndicator }: { shifts: Employee[], 
                     />
                 )}
             </div>
+            {/* Глобальный оверлей для закрытия тултипа на мобильных */}
+            {!isDesktop && activeTooltip && (
+                <div 
+                    style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999 }} 
+                    onClick={() => setActiveTooltip(null)} 
+                />
+            )}
         </div>
     );
 };
