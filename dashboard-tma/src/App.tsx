@@ -397,8 +397,8 @@ function App() {
             </AnimatePresence>
 
             <footer className="footer">
-                <p>Antigravity Swarm • v3.1.2-FORCE</p>
-                <p style={{ fontSize: '0.6rem', opacity: 0.3 }}>Ref: {window.location.href.split('?')[1] || 'no-query'}</p>
+                <p>Antigravity Swarm • v3.1.3-REFINE</p>
+                <p style={{ fontSize: '0.6rem', opacity: 0.3 }}>Build: {new Date().toLocaleString('ru-RU')} | Ref: {window.location.href.split('?')[1] || 'no-query'}</p>
             </footer>
         </div>
     );
