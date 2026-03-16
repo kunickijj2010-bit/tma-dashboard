@@ -41,7 +41,7 @@ serve(async (req) => {
         const employeeIds = [...new Set(shifts.map((s: any) => s.employee_id))];
         const { data: employees } = await supabase
             .from("employees")
-            .select("id, name, department, work_hours")
+            .select("id, name, department, work_hours, location, competencies, schedule_type")
             .in("id", employeeIds);
 
         if (!employees) throw new Error("Employees not found");

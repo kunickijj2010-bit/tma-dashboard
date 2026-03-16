@@ -392,6 +392,9 @@ function App() {
                                                 animate={{ x: 0, opacity: 1 }}
                                                 transition={{ delay: i * 0.1 }}
                                                 className="employee-item"
+                                                onTap={() => setSelectedEmployee(emp)}
+                                                onClick={() => setSelectedEmployee(emp)}
+                                                style={{ cursor: 'pointer' }}
                                             >
                                                 <div className="emp-avatar">
                                                     {emp.name.split(' ').map(n => n[0]).join('')}
@@ -422,6 +425,13 @@ function App() {
             </main>
 
             <AnimatePresence>
+                {selectedEmployee && (
+                    <EmployeeProfileModal 
+                        emp={selectedEmployee} 
+                        onClose={() => setSelectedEmployee(null)} 
+                    />
+                )}
+
                 {showDops && (
                     <motion.div
                         className="modal-overlay"
