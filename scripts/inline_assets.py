@@ -1,9 +1,21 @@
 import os
+import re
 
 dist_dir = r"c:\Users\user\.gemini\antigravity\scratch\Telegram-Bot-Refinement\dashboard-tma\dist"
+assets_dir = os.path.join(dist_dir, "assets")
+
 html_path = os.path.join(dist_dir, "index.html")
-css_path = os.path.join(dist_dir, "assets", "index-CoAXW8xz.css")
-js_path = os.path.join(dist_dir, "assets", "index-DSdxgmua.js")
+
+# Find CSS and JS dynamically
+try:
+    css_file = next(f for f in os.listdir(assets_dir) if f.startswith("index-") and f.endswith(".css"))
+    js_file = next(f for f in os.listdir(assets_dir) if f.startswith("index-") and f.endswith(".js"))
+except StopIteration:
+    print("❌ Failed to find compiled assets in dist/assets")
+    exit(1)
+
+css_path = os.path.join(assets_dir, css_file)
+js_path = os.path.join(assets_dir, js_file)
 output_path = os.path.join(dist_dir, "combined_dashboard.html")
 
 with open(html_path, "r", encoding="utf-8") as f:
@@ -15,16 +27,17 @@ with open(css_path, "r", encoding="utf-8") as f:
 with open(js_path, "r", encoding="utf-8") as f:
     js = f.read()
 
-# Inline CSS
-html = html.replace('<link rel="stylesheet" crossorigin href="./assets/index-CoAXW8xz.css">', f"<style>{css}</style>")
+# Replace CSS link tags dynamically
+css_match = re.search(r'<link[^>]*href="[^"]*assets/index-[^"]*\.css"[^>]*>', html)
+if css_match:
+    html = html.replace(css_match.group(0), f"<style>{css}</style>")
 
-# Inline JS
-html = html.replace('<script type="module" crossorigin src="./assets/index-DSdxgmua.js"></script>', f'<script type="module">{js}</script>')
-
-# Remove unnecessary lines like preconnect to speed up (optional but good)
-# Also ensure absolute fonts are working (fonts are external URLs, that's fine)
+# Replace JS script tags dynamically
+js_match = re.search(r'<script[^>]*src="[^"]*assets/index-[^"]*\.js"[^>]*><\/script>', html)
+if js_match:
+    html = html.replace(js_match.group(0), f'<script type="module">{js}</script>')
 
 with open(output_path, "w", encoding="utf-8") as f:
     f.write(html)
 
-print(f"✅ Created {output_path} ({len(html)} bytes)")
+print(f"[OK] Created {output_path} ({len(html)} bytes)")

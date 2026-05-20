@@ -14,4 +14,4 @@ escaped_html = json.dumps(html)
 with open(output_ts_path, "w", encoding="utf-8") as f:
     f.write(f"export const DASHBOARD_HTML = {escaped_html};\n")
 
-print(f"✅ Generated {output_ts_path}")
+print(f"[OK] Generated {output_ts_path}")

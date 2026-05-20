@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import WebApp from '@twa-dev/sdk'
-import { LayoutDashboard, Users, Clock, ChevronRight, Activity, Zap, Sparkles, Star } from 'lucide-react'
+import { LayoutDashboard, Users, Clock, ChevronRight, Activity, Zap, Sparkles, Star, Calendar } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './App.css'
 
@@ -200,7 +200,196 @@ const EmployeeProfileModal = ({ emp, onClose }: { emp: Employee, onClose: () => 
     );
 };
 
+const getMskDateOffset = (offsetDays: number) => {
+    const now = new Date();
+    const mskOffset = 3 * 60 * 60 * 1000;
+    const mskDate = new Date(now.getTime() + now.getTimezoneOffset() * 60000 + mskOffset);
+    mskDate.setDate(mskDate.getDate() + offsetDays);
+    return mskDate.toISOString().split("T")[0];
+};
+
+const getDepartments = (shifts: Employee[]) => {
+    const staticDepts = [
+        "GDS", "NDC", "VIP", "отели", "работа с поставщиками",
+        "МА Супервизия", "Jivo-chat", "Социальный",
+        "Специалисты по распределению запросов", "МА АДМИНИСТРАЦИЯ"
+    ];
+    const foundDepts = Array.from(new Set(shifts.map(s => s.department || "Другое")));
+    
+    const merged = [...staticDepts];
+    foundDepts.forEach(d => {
+        if (d && !merged.some(m => m.toLowerCase() === d.toLowerCase())) {
+            merged.push(d);
+        }
+    });
+    return merged;
+};
+
+const InteractiveHeatmap = ({ 
+    allDayShifts, 
+    currentMins, 
+    showIndicator, 
+    onEmployeeClick 
+}: { 
+    allDayShifts: Employee[], 
+    currentMins: number, 
+    showIndicator: boolean,
+    onEmployeeClick: (emp: Employee) => void
+}) => {
+    const [selectedCell, setSelectedCell] = useState<{ dept: string, hour: number } | null>(null);
+    const hours = Array.from({ length: 24 }, (_, i) => i);
+    
+    const departments = getDepartments(allDayShifts);
+    
+    const toMins = (time: string) => {
+        const [h, m] = time.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    const getCellEmployees = (dept: string, h: number) => {
+        const checkMin = h * 60 + 30;
+        return allDayShifts.filter(emp => {
+            const empDept = (emp.department || "").trim().toLowerCase();
+            const target = dept.toLowerCase();
+            const isDeptMatch = empDept === target || 
+                               (target === 'vip' && empDept === 'вип') || 
+                               (target === 'gds' && empDept === 'гдс') ||
+                               (target === 'отели' && empDept === 'hotels');
+            if (!isDeptMatch) return false;
+
+            const start = toMins(emp.startTime);
+            let end = toMins(emp.endTime);
+            if (end <= start) {
+                end += 1440;
+            }
+            return checkMin >= start && checkMin < end;
+        });
+    };
+
+    const getCellColor = (count: number) => {
+        if (count === 0) return 'rgba(255, 255, 255, 0.02)';
+        if (count === 1) return 'rgba(0, 242, 255, 0.12)';
+        if (count === 2) return 'rgba(0, 242, 255, 0.3)';
+        if (count === 3) return 'rgba(0, 242, 255, 0.55)';
+        return 'rgba(0, 242, 255, 0.8)';
+    };
+
+    const currentHour = Math.floor(currentMins / 60) % 24;
+
+    const selectedEmployees = selectedCell 
+        ? getCellEmployees(selectedCell.dept, selectedCell.hour)
+        : [];
+
+    return (
+        <div className="heatmap-container">
+            <div className="heatmap-grid-scroll">
+                <div className="heatmap-grid">
+                    {/* Header Row */}
+                    <div className="heatmap-header-cell sticky-col">Отдел</div>
+                    {hours.map(h => {
+                        const isCurrent = h === currentHour && showIndicator;
+                        return (
+                            <div key={h} className={`heatmap-header-cell ${isCurrent ? 'current-hour-header' : ''}`}>
+                                {h.toString().padStart(2, '0')}
+                            </div>
+                        );
+                    })}
+
+                    {/* Department Rows */}
+                    {departments.map((dept, deptIdx) => (
+                        <React.Fragment key={deptIdx}>
+                            <div className="heatmap-dept-label sticky-col">{dept}</div>
+                            {hours.map(h => {
+                                const employees = getCellEmployees(dept, h);
+                                const count = employees.length;
+                                const isCurrent = h === currentHour && showIndicator;
+                                const isSelected = selectedCell?.dept === dept && selectedCell?.hour === h;
+
+                                return (
+                                    <div 
+                                        key={h}
+                                        className={`heatmap-cell ${isCurrent ? 'current-hour-cell' : ''} ${isSelected ? 'selected-cell' : ''}`}
+                                        style={{ 
+                                            backgroundColor: getCellColor(count),
+                                            borderColor: isSelected ? '#00f2ff' : 'rgba(255,255,255,0.05)'
+                                        }}
+                                        onClick={() => {
+                                            if (isSelected) {
+                                                setSelectedCell(null);
+                                            } else {
+                                                setSelectedCell({ dept, hour: h });
+                                            }
+                                        }}
+                                    >
+                                        {count > 0 && <span className="heatmap-cell-count">{count}</span>}
+                                    </div>
+                                );
+                            })}
+                        </React.Fragment>
+                    ))}
+                </div>
+            </div>
+
+            {/* Legend */}
+            <div className="heatmap-legend">
+                <span className="legend-label">Сотрудников на линии:</span>
+                <div className="legend-items">
+                    <div className="legend-item"><span className="legend-box" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }} /> 0</div>
+                    <div className="legend-item"><span className="legend-box" style={{ backgroundColor: 'rgba(0, 242, 255, 0.12)' }} /> 1</div>
+                    <div className="legend-item"><span className="legend-box" style={{ backgroundColor: 'rgba(0, 242, 255, 0.3)' }} /> 2</div>
+                    <div className="legend-item"><span className="legend-box" style={{ backgroundColor: 'rgba(0, 242, 255, 0.55)' }} /> 3</div>
+                    <div className="legend-item"><span className="legend-box" style={{ backgroundColor: 'rgba(0, 242, 255, 0.8)' }} /> 4+</div>
+                </div>
+            </div>
+
+            {/* Selected Cell Details */}
+            <AnimatePresence>
+                {selectedCell && (
+                    <motion.div 
+                        className="heatmap-details-panel"
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 15 }}
+                    >
+                        <div className="details-header">
+                            <h3>{selectedCell.dept} в {selectedCell.hour.toString().padStart(2, '0')}:00</h3>
+                            <button className="details-close" onClick={() => setSelectedCell(null)}>×</button>
+                        </div>
+                        {selectedEmployees.length === 0 ? (
+                            <p className="no-emps-msg">В этот час нет сотрудников на смене</p>
+                        ) : (
+                            <div className="details-emp-list">
+                                {selectedEmployees.map((emp, i) => (
+                                    <div 
+                                        key={i} 
+                                        className="details-emp-item"
+                                        onClick={() => onEmployeeClick(emp)}
+                                    >
+                                        <div className="details-emp-avatar">
+                                            {emp.name.split(' ').map(n => n[0]).join('')}
+                                        </div>
+                                        <div className="details-emp-info">
+                                            <div className="details-emp-name-row">
+                                                <span className="details-emp-name">{emp.name}</span>
+                                                {emp.isDop && <span className="badge-dop">ДОП</span>}
+                                            </div>
+                                            <span className="details-emp-time">{emp.startTime} — {emp.endTime}</span>
+                                        </div>
+                                        <ChevronRight size={16} opacity={0.5} />
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
 function App() {
+    const [activeTab, setActiveTab] = useState<'timeline' | 'heatmap'>('timeline')
+    const [targetDate, setTargetDate] = useState<string>(() => getMskDateOffset(0))
     const [activeDept, setActiveDept] = useState<string | null>(null)
     const [showDops, setShowDops] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
@@ -218,9 +407,10 @@ function App() {
         return url.includes('view=premium') || search.includes('view=premium') || hash.includes('view=premium');
     }
 
-    const fetchData = async () => {
+    const fetchData = async (dateParam?: string) => {
         try {
-            const resp = await fetch('https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/telegram-bot?format=json')
+            const dateToFetch = dateParam || targetDate;
+            const resp = await fetch(`https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/telegram-bot?format=json&date=${dateToFetch}`)
             const json = await resp.json()
 
             if (json.departments) {
@@ -274,11 +464,16 @@ function App() {
     useEffect(() => {
         WebApp.ready()
         WebApp.expand()
-        fetchData()
-
-        const interval = setInterval(fetchData, 30000)
-        return () => clearInterval(interval)
     }, [])
+
+    useEffect(() => {
+        fetchData(targetDate)
+
+        const interval = setInterval(() => {
+            fetchData(targetDate)
+        }, 30000)
+        return () => clearInterval(interval)
+    }, [targetDate])
 
     if (loading) {
         return (
@@ -302,6 +497,28 @@ function App() {
                     <LayoutDashboard className="icon-main" />
                     <h1>Live Ops Dashboard</h1>
                 </motion.div>
+
+                {/* Date Picker Bar */}
+                <div className="date-picker-bar">
+                    <button 
+                        className={`date-picker-btn ${targetDate === getMskDateOffset(-1) ? 'active' : ''}`}
+                        onClick={() => setTargetDate(getMskDateOffset(-1))}
+                    >
+                        Вчера
+                    </button>
+                    <button 
+                        className={`date-picker-btn ${targetDate === getMskDateOffset(0) ? 'active' : ''}`}
+                        onClick={() => setTargetDate(getMskDateOffset(0))}
+                    >
+                        Сегодня
+                    </button>
+                    <button 
+                        className={`date-picker-btn ${targetDate === getMskDateOffset(1) ? 'active' : ''}`}
+                        onClick={() => setTargetDate(getMskDateOffset(1))}
+                    >
+                        Завтра
+                    </button>
+                </div>
 
                 <div className="stats-container">
                     <motion.div layout className="stat-item">
@@ -331,98 +548,132 @@ function App() {
 
                 <div className="status-bar">
                     <Activity size={14} className="pulse" />
-                    <span>Real-time • {analytics?.mskTimeStr} MSK</span>
+                    <span>
+                        {targetDate === getMskDateOffset(0) ? 'В эфире' : 'Архив'} • {targetDate} • {analytics?.mskTimeStr} MSK
+                    </span>
+                </div>
+
+                {/* View/Tab Switcher */}
+                <div className="tab-switcher-bar">
+                    <button 
+                        className={`tab-switcher-btn ${activeTab === 'timeline' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('timeline')}
+                    >
+                        <Clock size={16} />
+                        <span>Таймлайн</span>
+                    </button>
+                    <button 
+                        className={`tab-switcher-btn ${activeTab === 'heatmap' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('heatmap')}
+                    >
+                        <Calendar size={16} />
+                        <span>Теплокарта</span>
+                    </button>
                 </div>
             </header>
 
-            <main className="dashboard-grid">
-                {(data || []).map((dept) => (
-                    <motion.div
-                        key={dept.id}
-                        layout
-                        className={`dept-card ${activeDept === dept.id ? 'active' : ''} ${dept.onlineCount === 0 ? 'offline' : ''}`}
-                        onClick={() => setActiveDept(activeDept === dept.id ? null : dept.id)}
-                    >
-                        <div className="card-top">
-                            <div className="dept-info">
-                                <span className="dept-label">{dept.name}</span>
-                                <div className="count-section">
-                                    <span className="count-number">{dept.onlineCount === 0 ? 'OFFLINE' : dept.onlineCount}</span>
-                                    {dept.onlineCount > 0 && <span className="capacity">/ {dept.totalCapacity}</span>}
+            {activeTab === 'timeline' ? (
+                <main className="dashboard-grid">
+                    {(data || []).map((dept) => (
+                        <motion.div
+                            key={dept.id}
+                            layout
+                            className={`dept-card ${activeDept === dept.id ? 'active' : ''} ${dept.onlineCount === 0 ? 'offline' : ''}`}
+                            onClick={() => setActiveDept(activeDept === dept.id ? null : dept.id)}
+                        >
+                            <div className="card-top">
+                                <div className="dept-info">
+                                    <span className="dept-label">{dept.name}</span>
+                                    <div className="count-section">
+                                        <span className="count-number">{dept.onlineCount === 0 ? 'OFFLINE' : dept.onlineCount}</span>
+                                        {dept.onlineCount > 0 && <span className="capacity">/ {dept.totalCapacity}</span>}
+                                    </div>
                                 </div>
+                                <ChevronRight className={`arrow ${activeDept === dept.id ? 'rotated' : ''}`} />
                             </div>
-                            <ChevronRight className={`arrow ${activeDept === dept.id ? 'rotated' : ''}`} />
-                        </div>
 
-                        <div className="progress-container">
-                            <motion.div
-                                className="progress-bar"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${Math.min((dept.onlineCount / dept.totalCapacity) * 100, 100)}%` }}
-                                transition={{ duration: 1, ease: "easeOut" }}
-                            />
-                        </div>
-
-                        {!isPremiumMode() && (
-                            <Timeline 
-                                shifts={allDayShifts.filter(s => s.department === dept.name)} 
-                                currentMins={currentMins}
-                                showIndicator={true}
-                                onEmployeeClick={(emp) => {
-                                    const fullEmp = allEmployees.find(e => e.name === emp.name) || emp;
-                                    setSelectedEmployee(fullEmp);
-                                }}
-                            />
-                        )}
-
-                        <AnimatePresence>
-                            {activeDept === dept.id && (dept.employees || []).length > 0 && (
+                            <div className="progress-container">
                                 <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="employee-details"
-                                >
-                                    <div className="divider" />
-                                    <ul className="employee-list">
-                                        {(dept.employees || []).map((emp, i) => (
-                                            <motion.li
-                                                key={i}
-                                                initial={{ x: -10, opacity: 0 }}
-                                                animate={{ x: 0, opacity: 1 }}
-                                                transition={{ delay: i * 0.1 }}
-                                                className="employee-item"
-                                                onTap={() => setSelectedEmployee(emp)}
-                                                onClick={() => setSelectedEmployee(emp)}
-                                                style={{ cursor: 'pointer' }}
-                                            >
-                                                <div className="emp-avatar">
-                                                    {emp.name.split(' ').map(n => n[0]).join('')}
-                                                </div>
-                                                <div className="emp-meta">
-                                                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                        <span className="emp-name">{emp.name}</span>
-                                                        {emp.isDop && <span className="badge-dop">ДОП</span>}
-                                                    </div>
-                                                    <div className="emp-time">
-                                                        <div className="time-box">
-                                                            <Clock size={12} />
-                                                            <span>{emp.startTime} - {emp.endTime}</span>
-                                                        </div>
-                                                        <span className="time-remaining">
-                                                            осталось: {getTimeRemaining(emp.endTime)}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </motion.li>
-                                        ))}
-                                    </ul>
-                                </motion.div>
+                                    className="progress-bar"
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${Math.min((dept.onlineCount / dept.totalCapacity) * 100, 100)}%` }}
+                                    transition={{ duration: 1, ease: "easeOut" }}
+                                />
+                            </div>
+
+                            {!isPremiumMode() && (
+                                <Timeline 
+                                    shifts={allDayShifts.filter(s => s.department === dept.name)} 
+                                    currentMins={currentMins}
+                                    showIndicator={targetDate === getMskDateOffset(0)}
+                                    onEmployeeClick={(emp) => {
+                                        const fullEmp = allEmployees.find(e => e.name === emp.name) || emp;
+                                        setSelectedEmployee(fullEmp);
+                                    }}
+                                />
                             )}
-                        </AnimatePresence>
-                    </motion.div>
-                ))}
-            </main>
+
+                            <AnimatePresence>
+                                {activeDept === dept.id && (dept.employees || []).length > 0 && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="employee-details"
+                                    >
+                                        <div className="divider" />
+                                        <ul className="employee-list">
+                                            {(dept.employees || []).map((emp, i) => (
+                                                <motion.li
+                                                    key={i}
+                                                    initial={{ x: -10, opacity: 0 }}
+                                                    animate={{ x: 0, opacity: 1 }}
+                                                    transition={{ delay: i * 0.1 }}
+                                                    className="employee-item"
+                                                    onTap={() => setSelectedEmployee(emp)}
+                                                    onClick={() => setSelectedEmployee(emp)}
+                                                    style={{ cursor: 'pointer' }}
+                                                >
+                                                    <div className="emp-avatar">
+                                                        {emp.name.split(' ').map(n => n[0]).join('')}
+                                                    </div>
+                                                    <div className="emp-meta">
+                                                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                            <span className="emp-name">{emp.name}</span>
+                                                            {emp.isDop && <span className="badge-dop">ДОП</span>}
+                                                        </div>
+                                                        <div className="emp-time">
+                                                            <div className="time-box">
+                                                                <Clock size={12} />
+                                                                <span>{emp.startTime} - {emp.endTime}</span>
+                                                            </div>
+                                                            <span className="time-remaining">
+                                                                осталось: {getTimeRemaining(emp.endTime)}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </motion.li>
+                                            ))}
+                                        </ul>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </motion.div>
+                    ))}
+                </main>
+            ) : (
+                <main className="heatmap-main">
+                    <InteractiveHeatmap 
+                        allDayShifts={allDayShifts}
+                        currentMins={currentMins}
+                        showIndicator={targetDate === getMskDateOffset(0)}
+                        onEmployeeClick={(emp) => {
+                            const fullEmp = allEmployees.find(e => e.name === emp.name) || emp;
+                            setSelectedEmployee(fullEmp);
+                        }}
+                    />
+                </main>
+            )}
 
             <AnimatePresence>
                 {selectedEmployee && (
