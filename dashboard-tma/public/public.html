@@ -279,10 +279,106 @@
             font-size: 1.1rem;
         }
 
+        /* Collapsible Departments */
+        .dept-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+            transition: padding 0.3s, border-bottom 0.3s, margin-bottom 0.3s;
+        }
+
+        .dept-card.expanded .dept-header {
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .dept-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chevron-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--text-secondary);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dept-card.expanded .chevron-icon {
+            transform: rotate(180deg);
+            color: var(--accent-blue);
+        }
+
+        .emp-list-container {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+        }
+
+        .dept-card.expanded .emp-list-container {
+            max-height: 2000px;
+            opacity: 1;
+        }
+
+        /* Action buttons for header */
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-right: 1.5rem;
+        }
+
+        .action-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 0.5rem 0.85rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        @media (max-width: 900px) {
+            header {
+                flex-direction: column;
+                gap: 1.25rem;
+                align-items: stretch;
+                text-align: center;
+            }
+            .header-right {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            .header-actions {
+                margin-right: 0;
+                justify-content: center;
+            }
+            .stats-section {
+                justify-content: center;
+            }
+        }
+
         @media (max-width: 768px) {
             body { padding: 1rem; }
-            header { flex-direction: column; gap: 1rem; text-align: center; }
-            .stats-section { width: 100%; justify-content: center; }
             .grid-container { grid-template-columns: 1fr; }
         }
     </style>
@@ -296,14 +392,20 @@
                 <span>Онлайн-график • Время МСК: <span id="msk-time-val">--:--</span></span>
             </div>
         </div>
-        <div class="stats-section">
-            <div class="stat-badge">
-                <div class="stat-val" id="total-online-val">--</div>
-                <div class="stat-label">На смене</div>
+        <div class="header-right" style="display: flex; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div class="header-actions">
+                <button class="action-btn" onclick="expandAll()">Развернуть все</button>
+                <button class="action-btn" onclick="collapseAll()">Свернуть все</button>
             </div>
-            <div class="stat-badge">
-                <div class="stat-val purple" id="total-dops-val">--</div>
-                <div class="stat-label">Усиление (Допы)</div>
+            <div class="stats-section">
+                <div class="stat-badge">
+                    <div class="stat-val" id="total-online-val">--</div>
+                    <div class="stat-label">На смене</div>
+                </div>
+                <div class="stat-badge">
+                    <div class="stat-val purple" id="total-dops-val">--</div>
+                    <div class="stat-label">Усиление (Допы)</div>
+                </div>
             </div>
         </div>
     </header>
@@ -312,8 +414,10 @@
         <div class="loading-view">Загрузка данных мониторинга...</div>
     </div>
 
-    <script>
         const API_URL = 'https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/public-dashboard?format=json';
+        
+        let expandedDepts = new Set();
+        let isInitialLoad = true;
 
         // Update function called every 60 seconds
         async function refreshData() {
@@ -329,7 +433,17 @@
                 document.getElementById('total-online-val').textContent = data.totalOnline;
                 document.getElementById('total-dops-val').textContent = data.totalDops;
 
-                // 2. Re-render Grid
+                // 2. Setup initial expansion (only departments with online employees)
+                if (isInitialLoad && data.departments) {
+                    data.departments.forEach(d => {
+                        if (d.employees && d.employees.length > 0) {
+                            expandedDepts.add(d.id);
+                        }
+                    });
+                    isInitialLoad = false;
+                }
+
+                // 3. Re-render Grid
                 const gridRoot = document.getElementById('grid-root');
                 gridRoot.innerHTML = renderDepts(data.departments, data.currentMins);
 
@@ -338,6 +452,40 @@
                 console.error("Fetch failed:", e);
                 if (spinner) spinner.style.backgroundColor = '#ef4444'; // Red on error
             }
+        }
+
+        // Toggle department expansion
+        function toggleDept(deptId) {
+            const card = document.getElementById(`card-${deptId}`);
+            if (!card) return;
+
+            if (expandedDepts.has(deptId)) {
+                expandedDepts.delete(deptId);
+                card.classList.remove('expanded');
+            } else {
+                expandedDepts.add(deptId);
+                card.classList.add('expanded');
+            }
+        }
+
+        // Expand all departments
+        function expandAll() {
+            const cards = document.querySelectorAll('.dept-card');
+            cards.forEach(card => {
+                const id = card.id.replace('card-', '');
+                expandedDepts.add(id);
+                card.classList.add('expanded');
+            });
+        }
+
+        // Collapse all departments
+        function collapseAll() {
+            const cards = document.querySelectorAll('.dept-card');
+            cards.forEach(card => {
+                const id = card.id.replace('card-', '');
+                expandedDepts.delete(id);
+                card.classList.remove('expanded');
+            });
         }
 
         // JS client-side rendering helper for update
@@ -389,13 +537,22 @@
                     }).join('')
                     : '<div class="empty-state">Нет сотрудников на смене</div>';
 
+                const isExpanded = expandedDepts.has(d.id);
+
                 html += `
-                    <div class="dept-card">
-                        <div class="dept-header">
-                            <span class="dept-title">${d.name}</span>
+                    <div class="dept-card ${isExpanded ? 'expanded' : ''}" id="card-${d.id}">
+                        <div class="dept-header" onclick="toggleDept('${d.id}')">
+                            <div class="dept-header-left">
+                                <svg class="chevron-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                                <span class="dept-title">${d.name}</span>
+                            </div>
                             <span class="dept-badge">${d.employees.length} онлайн</span>
                         </div>
-                        <div class="emp-list">${employeesHtml}</div>
+                        <div class="emp-list-container">
+                            <div class="emp-list">${employeesHtml}</div>
+                        </div>
                     </div>
                 `;
             }
