@@ -7,27 +7,27 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --card-bg: rgba(17, 25, 40, 0.65);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --text-main: #ffffff;
+            --bg-color: #050811;
+            --card-bg: rgba(10, 17, 34, 0.6);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --text-main: #f1f5f9;
             --text-secondary: #94a3b8;
             --accent-blue: #3b82f6;
             --accent-green: #10b981;
-            --accent-purple: #8b5cf6;
-            --accent-yellow: #f59e0b;
+            --accent-purple: #a78bfa;
+            --accent-yellow: #fbbf24;
         }
 
         :root[data-theme="light"] {
-            --bg-color: #f1f5f9;
-            --card-bg: rgba(255, 255, 255, 0.7);
-            --card-border: rgba(0, 0, 0, 0.08);
+            --bg-color: #050811; /* Keep same dark cosmic background */
+            --card-bg: rgba(241, 245, 249, 0.9); /* light frosted glass cards */
+            --card-border: rgba(255, 255, 255, 0.4);
             --text-main: #0f172a;
-            --text-secondary: #64748b;
-            --accent-blue: #2563eb;
-            --accent-green: #059669;
-            --accent-purple: #7c3aed;
-            --accent-yellow: #d97706;
+            --text-secondary: #475569;
+            --accent-blue: #1d4ed8;
+            --accent-green: #047857;
+            --accent-purple: #6d28d9;
+            --accent-yellow: #b45309;
         }
 
         * {
@@ -42,8 +42,12 @@
             color: var(--text-main);
             min-height: 100vh;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0, transparent 40%),
-                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.12) 0, transparent 40%);
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 100% 100%, 30px 30px, 30px 30px;
             background-attachment: fixed;
             padding: 2rem;
             transition: background-color 0.3s, color 0.3s;
@@ -51,8 +55,11 @@
 
         :root[data-theme="light"] body {
             background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0, transparent 40%),
-                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.08) 0, transparent 40%);
+                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.04) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
         }
 
         header {
@@ -64,9 +71,14 @@
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             border-radius: 16px;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            transition: background-color 0.3s, border-color 0.3s;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        :root[data-theme="light"] header {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4);
         }
 
         .logo-section h1 {
@@ -94,11 +106,12 @@
             padding: 0.75rem 1.25rem;
             border-radius: 12px;
             text-align: center;
-            transition: background-color 0.3s, border-color 0.3s;
+            transition: all 0.3s ease;
         }
 
         :root[data-theme="light"] .stat-badge {
-            background: rgba(0, 0, 0, 0.02);
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.06);
         }
 
         .stat-val {
@@ -155,16 +168,27 @@
             border: 1px solid var(--card-border);
             border-radius: 16px;
             padding: 1.5rem;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             display: flex;
             flex-direction: column;
-            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s, border-color 0.3s;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
         }
 
         .dept-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            transform: translateY(-4px) scale(1.01);
+            border-color: rgba(99, 102, 241, 0.35);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        :root[data-theme="light"] .dept-card {
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        }
+
+        :root[data-theme="light"] .dept-card:hover {
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.4);
         }
 
         .dept-header {
@@ -174,6 +198,10 @@
             margin-bottom: 1.25rem;
             padding-bottom: 0.75rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        :root[data-theme="light"] .dept-header {
+            border-bottom-color: rgba(0, 0, 0, 0.06);
         }
 
         .dept-title {
@@ -207,16 +235,26 @@
         }
 
         .emp-item {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.03);
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.025);
             border-radius: 12px;
             padding: 1rem;
-            transition: background-color 0.3s, border-color 0.3s;
+            transition: all 0.25s ease;
+        }
+
+        .emp-item:hover {
+            background: rgba(255, 255, 255, 0.035);
+            border-color: rgba(255, 255, 255, 0.06);
         }
 
         :root[data-theme="light"] .emp-item {
-            background: rgba(0, 0, 0, 0.015);
-            border-color: rgba(0, 0, 0, 0.025);
+            background: rgba(0, 0, 0, 0.02);
+            border-color: rgba(0, 0, 0, 0.04);
+        }
+
+        :root[data-theme="light"] .emp-item:hover {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
         }
 
         .emp-info {
@@ -677,39 +715,55 @@
 
         .dop-item-progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, var(--accent-yellow), #ec4899);
+            background: linear-gradient(90deg, #f59e0b, #ec4899);
             border-radius: 2px;
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+        }
+
+        /* Progress Bar Neon glow */
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #3b82f6, #8b5cf6);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 1s ease-in-out;
+            box-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
+        }
+
+        .progress-bar.dop {
+            background: linear-gradient(90deg, #f59e0b, #ec4899);
+            box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
         }
 
         /* Light Theme Overrides */
         :root[data-theme="light"] .tag {
-            background: rgba(124, 58, 237, 0.06);
-            color: var(--accent-purple);
-            border-color: rgba(124, 58, 237, 0.15);
+            background: rgba(109, 40, 217, 0.08);
+            color: #5b21b6;
+            border-color: rgba(109, 40, 217, 0.15);
         }
         :root[data-theme="light"] .emp-meta-item {
-            background: rgba(0, 0, 0, 0.04);
+            background: rgba(0, 0, 0, 0.05);
         }
         :root[data-theme="light"] .modal-card {
-            background: rgba(255, 255, 255, 0.9);
-            border-color: rgba(0, 0, 0, 0.1);
-            color: var(--text-main);
+            background: rgba(241, 245, 249, 0.95);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: #0f172a;
         }
         :root[data-theme="light"] .dop-item {
-            background: rgba(0, 0, 0, 0.01);
-            border-color: rgba(0, 0, 0, 0.025);
+            background: rgba(0, 0, 0, 0.02);
+            border-color: rgba(0, 0, 0, 0.04);
         }
         :root[data-theme="light"] .dop-item-name {
             color: var(--text-main);
         }
         :root[data-theme="light"] .action-btn {
-            background: rgba(0, 0, 0, 0.02);
+            background: rgba(0, 0, 0, 0.04);
             border-color: rgba(0, 0, 0, 0.08);
-            color: var(--text-secondary);
+            color: #475569;
         }
         :root[data-theme="light"] .action-btn:hover {
-            background: rgba(0, 0, 0, 0.05);
-            color: var(--text-main);
+            background: rgba(0, 0, 0, 0.08);
+            color: #0f172a;
             border-color: rgba(0, 0, 0, 0.15);
         }
 
@@ -828,12 +882,13 @@
         }
 
         :root[data-theme="light"] .search-box input {
-            background: rgba(0, 0, 0, 0.015);
+            background: rgba(0, 0, 0, 0.03);
             border-color: rgba(0, 0, 0, 0.08);
+            color: #0f172a;
         }
 
         :root[data-theme="light"] .search-box input:focus {
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.95);
             border-color: var(--accent-blue);
         }
 
@@ -854,6 +909,7 @@
                 width: 100%;
             }
         }
+    </style>  }
     </style>
 </head>
 <body>
@@ -905,7 +961,7 @@
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
-            <input type="text" id="search-input" placeholder="Поиск сотрудника или отдела..." oninput="handleSearch()">
+            <input type="text" id="search-input" placeholder="Поиск по имени, отделу или GDS..." oninput="handleSearch()">
         </div>
         <div class="filter-bar" id="filter-bar">
             <!-- Filter chips will be dynamically loaded here -->
@@ -1082,12 +1138,13 @@
                     ? d.employees
                     : d.employees.filter(e => e.competencies.includes(selectedFilter));
 
-                // Filter by search query (match dept name or employee name/location)
+                // Filter by search query (match dept name or employee name/location/competencies)
                 const deptMatches = d.name.toLowerCase().includes(searchQ);
                 if (searchQ && !deptMatches) {
                     filteredEmployees = filteredEmployees.filter(e => 
                         e.name.toLowerCase().includes(searchQ) || 
-                        e.location.toLowerCase().includes(searchQ)
+                        e.location.toLowerCase().includes(searchQ) ||
+                        e.competencies.some(c => c.toLowerCase().includes(searchQ))
                     );
                 }
 
@@ -1118,6 +1175,7 @@
                         const timeClass = e.isDop ? 'emp-time dop' : 'emp-time';
 
                         const tags = e.competencies.map(t => `<span class="tag">${t}</span>`).join('');
+                        const barClass = e.isDop ? 'progress-bar dop' : 'progress-bar';
 
                         return `
                             <div class="emp-item">
@@ -1136,7 +1194,7 @@
                                 </div>
                                 <div class="tags-container">${tags}</div>
                                 <div class="progress-container">
-                                    <div class="progress-bar" style="width: ${pct}%;"></div>
+                                    <div class="${barClass}" style="width: ${pct}%;"></div>
                                 </div>
                             </div>
                         `;
