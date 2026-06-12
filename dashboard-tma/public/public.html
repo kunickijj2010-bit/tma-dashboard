@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мониторинг Смен КЦ</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: rgba(17, 25, 40, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #ffffff;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-purple: #8b5cf6;
+            --accent-yellow: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Montserrat', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0, transparent 40%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.12) 0, transparent 40%);
+            background-attachment: fixed;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .logo-section h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.25rem;
+        }
+
+        .logo-section p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .stats-section {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .stat-badge {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            padding: 0.75rem 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .stat-val.green { color: var(--accent-green); }
+        .stat-val.purple { color: var(--accent-purple); }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.2rem;
+        }
+
+        /* Sync Status indicator */
+        .sync-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 8px;
+            height: 8px;
+            background-color: var(--accent-green);
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 1.8s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.3); opacity: 1; }
+            100% { transform: scale(0.8); opacity: 0.5; }
+        }
+
+        /* Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .dept-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .dept-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .dept-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .dept-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .dept-badge {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            color: var(--text-secondary);
+            font-style: italic;
+            font-size: 0.9rem;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        /* Employee card list */
+        .emp-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .emp-item {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .emp-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .emp-name {
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #f1f5f9;
+        }
+
+        .emp-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .emp-meta-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        .emp-time {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--accent-green);
+            text-align: right;
+        }
+
+        .emp-time.dop {
+            color: var(--accent-yellow);
+        }
+
+        /* Badges */
+        .dop-badge {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-yellow);
+            font-size: 0.75rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 2px;
+            margin-top: 0.75rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-blue), var(--accent-green));
+            border-radius: 2px;
+            width: 0%;
+            transition: width 1s ease-in-out;
+        }
+
+        /* Tags for competencies */
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.6rem;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            background: rgba(139, 92, 246, 0.1);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        /* Loading View */
+        .loading-view {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            body { padding: 1rem; }
+            header { flex-direction: column; gap: 1rem; text-align: center; }
+            .stats-section { width: 100%; justify-content: center; }
+            .grid-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-section">
+            <h1>Мониторинг Смен КЦ</h1>
+            <div class="sync-indicator">
+                <span class="spinner"></span>
+                <span>Онлайн-график • Время МСК: <span id="msk-time-val">--:--</span></span>
+            </div>
+        </div>
+        <div class="stats-section">
+            <div class="stat-badge">
+                <div class="stat-val" id="total-online-val">--</div>
+                <div class="stat-label">На смене</div>
+            </div>
+            <div class="stat-badge">
+                <div class="stat-val purple" id="total-dops-val">--</div>
+                <div class="stat-label">Усиление (Допы)</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="grid-container" id="grid-root">
+        <div class="loading-view">Загрузка данных мониторинга...</div>
+    </div>
+
+    <script>
+        const API_URL = 'https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/public-dashboard?format=json';
+
+        // Update function called every 60 seconds
+        async function refreshData() {
+            const spinner = document.querySelector('.spinner');
+            if (spinner) spinner.style.backgroundColor = '#f59e0b'; // Amber color while fetching
+
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                
+                // 1. Update headers
+                document.getElementById('msk-time-val').textContent = data.mskTimeStr;
+                document.getElementById('total-online-val').textContent = data.totalOnline;
+                document.getElementById('total-dops-val').textContent = data.totalDops;
+
+                // 2. Re-render Grid
+                const gridRoot = document.getElementById('grid-root');
+                gridRoot.innerHTML = renderDepts(data.departments, data.currentMins);
+
+                if (spinner) spinner.style.backgroundColor = '#10b981'; // Green on success
+            } catch (e) {
+                console.error("Fetch failed:", e);
+                if (spinner) spinner.style.backgroundColor = '#ef4444'; // Red on error
+            }
+        }
+
+        // JS client-side rendering helper for update
+        function renderDepts(depts, currentMins) {
+            let html = '';
+            for (const d of depts) {
+                const employeesHtml = d.employees.length > 0 
+                    ? d.employees.map(e => {
+                        // Calculate shift progress percentage
+                        let duration = e.endMins - e.startMins;
+                        if (duration <= 0) duration += 1440;
+                        let elapsed = currentMins - e.startMins;
+                        if (elapsed < 0 && e.startMins > 1000) elapsed += 1440; // overnight boundary
+                        let pct = Math.max(0, Math.min(100, Math.floor((elapsed / duration) * 100)));
+
+                        // Calculate remaining time
+                        let remMin = e.endMins - currentMins;
+                        if (remMin < 0) remMin += 1440;
+                        const remH = Math.floor(remMin / 60);
+                        const remM = remMin % 60;
+                        const timeText = remH > 0 ? `${remH}ч ${remM}м` : `${remM}м`;
+
+                        const dopBadge = e.isDop ? '<span class="dop-badge">Доп</span>' : '';
+                        const timeClass = e.isDop ? 'emp-time dop' : 'emp-time';
+
+                        const tags = e.competencies.map(t => `<span class="tag">${t}</span>`).join('');
+
+                        return `
+                            <div class="emp-item">
+                                <div class="emp-info">
+                                    <div>
+                                        <div class="emp-name">${e.name}</div>
+                                        <div class="emp-meta">
+                                            <span class="emp-meta-item">${e.location}</span>
+                                            ${dopBadge}
+                                        </div>
+                                    </div>
+                                    <div class="${timeClass}">
+                                        <div>${e.startTime} - ${e.endTime}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem;">ост. ${timeText}</div>
+                                    </div>
+                                </div>
+                                <div class="tags-container">${tags}</div>
+                                <div class="progress-container">
+                                    <div class="progress-bar" style="width: ${pct}%;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<div class="empty-state">Нет сотрудников на смене</div>';
+
+                html += `
+                    <div class="dept-card">
+                        <div class="dept-header">
+                            <span class="dept-title">${d.name}</span>
+                            <span class="dept-badge">${d.employees.length} онлайн</span>
+                        </div>
+                        <div class="emp-list">${employeesHtml}</div>
+                    </div>
+                `;
+            }
+            return html;
+        }
+
+        // Load initial data
+        refreshData();
+
+        // Set intervals
+        setInterval(refreshData, 60000);
+    </script>
+</body>
+</html>
