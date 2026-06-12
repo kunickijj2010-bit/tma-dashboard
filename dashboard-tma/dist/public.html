@@ -7,27 +7,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #050811;
-            --card-bg: rgba(10, 17, 34, 0.6);
-            --card-border: rgba(255, 255, 255, 0.06);
+            --bg-color: #040613;
+            --card-bg: rgba(8, 12, 28, 0.45);
+            --card-border: rgba(99, 102, 241, 0.15);
             --text-main: #f1f5f9;
             --text-secondary: #94a3b8;
-            --accent-blue: #3b82f6;
-            --accent-green: #10b981;
-            --accent-purple: #a78bfa;
+            --accent-blue: #60a5fa;
+            --accent-green: #34d399;
+            --accent-purple: #c084fc;
             --accent-yellow: #fbbf24;
+            --glow-color: rgba(99, 102, 241, 0.2);
         }
 
         :root[data-theme="light"] {
-            --bg-color: #050811; /* Keep same dark cosmic background */
-            --card-bg: rgba(241, 245, 249, 0.9); /* light frosted glass cards */
-            --card-border: rgba(255, 255, 255, 0.4);
-            --text-main: #0f172a;
-            --text-secondary: #475569;
-            --accent-blue: #1d4ed8;
-            --accent-green: #047857;
-            --accent-purple: #6d28d9;
-            --accent-yellow: #b45309;
+            --bg-color: #e2f1f5;
+            --card-bg: rgba(255, 255, 255, 0.72);
+            --card-border: rgba(255, 255, 255, 0.55);
+            --text-main: #0c354a;
+            --text-secondary: #4a6c80;
+            --accent-blue: #0284c7;
+            --accent-green: #0d9488;
+            --accent-purple: #7c3aed;
+            --accent-yellow: #ea580c;
+            --glow-color: rgba(2, 132, 199, 0.1);
         }
 
         * {
@@ -42,24 +44,20 @@
             color: var(--text-main);
             min-height: 100vh;
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 45%),
-                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.08) 0%, transparent 50%),
-                linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
-            background-size: 100% 100%, 100% 100%, 100% 100%, 30px 30px, 30px 30px;
+                radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                url('./assets/cosmic_space_bg.png');
+            background-size: 100% 100%, cover;
+            background-position: center;
+            background-repeat: no-repeat;
             background-attachment: fixed;
             padding: 2rem;
-            transition: background-color 0.3s, color 0.3s;
+            transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.6s, color 0.3s;
         }
 
         :root[data-theme="light"] body {
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 45%),
-                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.04) 0%, transparent 50%),
-                linear-gradient(rgba(255, 255, 255, 0.007) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.007) 1px, transparent 1px);
+                radial-gradient(circle at 50% 50%, rgba(2, 132, 199, 0.05) 0%, transparent 50%),
+                url('./assets/marine_warm_bg.png');
         }
 
         header {
@@ -178,17 +176,17 @@
 
         .dept-card:hover {
             transform: translateY(-4px) scale(1.01);
-            border-color: rgba(99, 102, 241, 0.35);
-            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.18), 0 0 20px rgba(139, 92, 246, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.08);
         }
 
         :root[data-theme="light"] .dept-card {
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px 0 rgba(12, 53, 74, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
         }
 
         :root[data-theme="light"] .dept-card:hover {
-            border-color: rgba(99, 102, 241, 0.5);
-            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            border-color: rgba(2, 132, 199, 0.4);
+            box-shadow: 0 12px 40px rgba(2, 132, 199, 0.15), 0 0 20px rgba(2, 132, 199, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.6);
         }
 
         .dept-header {
@@ -737,34 +735,36 @@
 
         /* Light Theme Overrides */
         :root[data-theme="light"] .tag {
-            background: rgba(109, 40, 217, 0.08);
-            color: #5b21b6;
-            border-color: rgba(109, 40, 217, 0.15);
+            background: rgba(13, 148, 136, 0.08);
+            color: #0f766e;
+            border-color: rgba(13, 148, 136, 0.15);
         }
         :root[data-theme="light"] .emp-meta-item {
-            background: rgba(0, 0, 0, 0.05);
+            background: rgba(12, 53, 74, 0.05);
+            color: #334e68;
         }
         :root[data-theme="light"] .modal-card {
-            background: rgba(241, 245, 249, 0.95);
-            border-color: rgba(255, 255, 255, 0.4);
-            color: #0f172a;
+            background: rgba(226, 241, 245, 0.96);
+            border-color: rgba(255, 255, 255, 0.6);
+            color: #0c354a;
+            box-shadow: 0 20px 40px rgba(12, 53, 74, 0.25);
         }
         :root[data-theme="light"] .dop-item {
-            background: rgba(0, 0, 0, 0.02);
-            border-color: rgba(0, 0, 0, 0.04);
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.5);
         }
         :root[data-theme="light"] .dop-item-name {
-            color: var(--text-main);
+            color: #0c354a;
         }
         :root[data-theme="light"] .action-btn {
-            background: rgba(0, 0, 0, 0.04);
-            border-color: rgba(0, 0, 0, 0.08);
-            color: #475569;
+            background: rgba(255, 255, 255, 0.4);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: #0c354a;
         }
         :root[data-theme="light"] .action-btn:hover {
-            background: rgba(0, 0, 0, 0.08);
-            color: #0f172a;
-            border-color: rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.7);
+            color: #0369a1;
+            border-color: rgba(2, 132, 199, 0.3);
         }
 
         /* Theme Switcher */
@@ -909,7 +909,6 @@
                 width: 100%;
             }
         }
-    </style>  }
     </style>
 </head>
 <body>
