@@ -357,6 +357,48 @@
             border-color: rgba(255, 255, 255, 0.15);
         }
 
+        /* Filter Bar and Chips */
+        .filter-bar {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            padding: 0.5rem 0.25rem;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE 10+ */
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none; /* Safari and Chrome */
+        }
+
+        .filter-chip {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            color: var(--text-secondary);
+            padding: 0.5rem 1.25rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+        }
+
+        .filter-chip:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .filter-chip.active {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+        }
+
         @media (max-width: 900px) {
             header {
                 flex-direction: column;
@@ -410,14 +452,21 @@
         </div>
     </header>
 
+    <div class="filter-bar" id="filter-bar">
+        <!-- Filter chips will be dynamically loaded here -->
+    </div>
+
     <div class="grid-container" id="grid-root">
         <div class="loading-view">Загрузка данных мониторинга...</div>
     </div>
 
+    <script>
         const API_URL = 'https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/public-dashboard?format=json';
         
         let expandedDepts = new Set();
         let isInitialLoad = true;
+        let globalData = null;
+        let selectedFilter = 'all';
 
         // Update function called every 60 seconds
         async function refreshData() {
@@ -428,6 +477,9 @@
                 const res = await fetch(API_URL);
                 const data = await res.json();
                 
+                // Store globally
+                globalData = data;
+
                 // 1. Update headers
                 document.getElementById('msk-time-val').textContent = data.mskTimeStr;
                 document.getElementById('total-online-val').textContent = data.totalOnline;
@@ -443,7 +495,10 @@
                     isInitialLoad = false;
                 }
 
-                // 3. Re-render Grid
+                // 3. Render filter chips
+                renderFilterChips(data.departments);
+
+                // 4. Re-render Grid
                 const gridRoot = document.getElementById('grid-root');
                 gridRoot.innerHTML = renderDepts(data.departments, data.currentMins);
 
@@ -488,12 +543,70 @@
             });
         }
 
+        // Render system booking filter chips
+        function renderFilterChips(departments) {
+            const activeCompetencies = new Set();
+            departments.forEach(d => {
+                d.employees.forEach(e => {
+                    e.competencies.forEach(c => activeCompetencies.add(c));
+                });
+            });
+
+            const sortedCompetencies = Array.from(activeCompetencies).sort();
+            const filterBar = document.getElementById('filter-bar');
+            if (!filterBar) return;
+
+            let html = `<button class="filter-chip ${selectedFilter === 'all' ? 'active' : ''}" data-filter="all" onclick="selectFilter('all')">Все системы</button>`;
+            
+            sortedCompetencies.forEach(c => {
+                html += `<button class="filter-chip ${selectedFilter === c ? 'active' : ''}" data-filter="${c}" onclick="selectFilter('${c}')">${c}</button>`;
+            });
+
+            filterBar.innerHTML = html;
+        }
+
+        // Select a booking system filter
+        function selectFilter(comp) {
+            selectedFilter = comp;
+            
+            // Update active class in chips
+            const chips = document.querySelectorAll('.filter-chip');
+            chips.forEach(chip => {
+                if (chip.getAttribute('data-filter') === comp) {
+                    chip.classList.add('active');
+                } else {
+                    chip.classList.remove('active');
+                }
+            });
+
+            if (!globalData) return;
+
+            // Auto-expand departments that have matching employees for the new filter
+            if (selectedFilter !== 'all') {
+                globalData.departments.forEach(d => {
+                    const matches = d.employees.filter(e => e.competencies.includes(selectedFilter));
+                    if (matches.length > 0) {
+                        expandedDepts.add(d.id);
+                    }
+                });
+            }
+
+            // Re-render
+            const gridRoot = document.getElementById('grid-root');
+            gridRoot.innerHTML = renderDepts(globalData.departments, globalData.currentMins);
+        }
+
         // JS client-side rendering helper for update
         function renderDepts(depts, currentMins) {
             let html = '';
             for (const d of depts) {
-                const employeesHtml = d.employees.length > 0 
-                    ? d.employees.map(e => {
+                // Filter employees inside department by reservation system
+                const filteredEmployees = selectedFilter === 'all'
+                    ? d.employees
+                    : d.employees.filter(e => e.competencies.includes(selectedFilter));
+
+                const employeesHtml = filteredEmployees.length > 0 
+                    ? filteredEmployees.map(e => {
                         // Calculate shift progress percentage
                         let duration = e.endMins - e.startMins;
                         if (duration <= 0) duration += 1440;
@@ -535,9 +648,14 @@
                             </div>
                         `;
                     }).join('')
-                    : '<div class="empty-state">Нет сотрудников на смене</div>';
+                    : '<div class="empty-state">Нет сотрудников с выбранной квалификацией</div>';
 
                 const isExpanded = expandedDepts.has(d.id);
+                
+                // Show filtered count versus total online count
+                const countText = selectedFilter === 'all'
+                    ? `${d.employees.length} онлайн`
+                    : `${filteredEmployees.length} из ${d.employees.length}`;
 
                 html += `
                     <div class="dept-card ${isExpanded ? 'expanded' : ''}" id="card-${d.id}">
@@ -548,7 +666,7 @@
                                 </svg>
                                 <span class="dept-title">${d.name}</span>
                             </div>
-                            <span class="dept-badge">${d.employees.length} онлайн</span>
+                            <span class="dept-badge">${countText}</span>
                         </div>
                         <div class="emp-list-container">
                             <div class="emp-list">${employeesHtml}</div>
