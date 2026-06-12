@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import WebApp from '@twa-dev/sdk'
-import { LayoutDashboard, Users, Clock, ChevronRight, Activity, Zap, Sparkles, Star, Calendar } from 'lucide-react'
+import { LayoutDashboard, Users, Clock, ChevronRight, Activity, Zap, Sparkles, Star, Calendar, Bell, Trash2, Plus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import './App.css'
 
@@ -388,7 +388,7 @@ const InteractiveHeatmap = ({
 };
 
 function App() {
-    const [activeTab, setActiveTab] = useState<'timeline' | 'heatmap'>('timeline')
+    const [activeTab, setActiveTab] = useState<'timeline' | 'heatmap' | 'reminders'>('timeline')
     const [targetDate, setTargetDate] = useState<string>(() => getMskDateOffset(0))
     const [activeDept, setActiveDept] = useState<string | null>(null)
     const [showDops, setShowDops] = useState(false);
@@ -399,6 +399,15 @@ function App() {
     const [analytics, setAnalytics] = useState<Analytics | null>(null)
     const [currentMins, setCurrentMins] = useState(0)
     const [loading, setLoading] = useState(true)
+
+    // Reminders state
+    const [reminders, setReminders] = useState<any[]>([])
+    const [remindersLoading, setRemindersLoading] = useState(false)
+    const [ticket, setTicket] = useState('')
+    const [remindAt, setRemindAt] = useState('')
+    const [targetUser, setTargetUser] = useState('self')
+    const [reminderText, setReminderText] = useState('')
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const isPremiumMode = () => {
         const url = window.location.href;
@@ -440,6 +449,84 @@ function App() {
         }
     }
 
+    const fetchReminders = async () => {
+        setRemindersLoading(true);
+        try {
+            const userId = WebApp.initDataUnsafe?.user?.id || 12345678;
+            const resp = await fetch(`https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/telegram-bot?action=get_reminders&chat_id=${userId}`);
+            const json = await resp.json();
+            if (json.success) {
+                setReminders(json.reminders || []);
+            }
+        } catch (e) {
+            console.error("Error fetching reminders:", e);
+        } finally {
+            setRemindersLoading(false);
+        }
+    };
+
+    const handleCreateReminder = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!reminderText || !remindAt) return;
+        setIsSubmitting(true);
+        try {
+            const userId = WebApp.initDataUnsafe?.user?.id || 12345678;
+            const username = WebApp.initDataUnsafe?.user?.username || "Guest";
+            const remindAtIso = new Date(remindAt).toISOString();
+
+            const resp = await fetch(`https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/telegram-bot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'create_reminder',
+                    chat_id: userId,
+                    username: username,
+                    ticket: ticket || 'none',
+                    remind_at: remindAtIso,
+                    target_user: targetUser,
+                    text: reminderText
+                })
+            });
+            const json = await resp.json();
+            if (json.success) {
+                setTicket('');
+                setRemindAt('');
+                setTargetUser('self');
+                setReminderText('');
+                await fetchReminders();
+            } else {
+                alert(json.message || "Ошибка создания напоминания");
+            }
+        } catch (err) {
+            console.error("Error creating reminder:", err);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleDeleteReminder = async (id: string) => {
+        try {
+            const userId = WebApp.initDataUnsafe?.user?.id || 12345678;
+            const resp = await fetch(`https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/telegram-bot`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    action: 'delete_reminder',
+                    chat_id: userId,
+                    id: id
+                })
+            });
+            const json = await resp.json();
+            if (json.success) {
+                await fetchReminders();
+            } else {
+                alert(json.message || "Ошибка удаления");
+            }
+        } catch (err) {
+            console.error("Error deleting reminder:", err);
+        }
+    };
+
     const getTimeRemaining = (endTimeStr: string) => {
         const [hours, minutes] = endTimeStr.split(':').map(Number);
         const now = new Date();
@@ -474,6 +561,12 @@ function App() {
         }, 30000)
         return () => clearInterval(interval)
     }, [targetDate])
+
+    useEffect(() => {
+        if (activeTab === 'reminders') {
+            fetchReminders();
+        }
+    }, [activeTab])
 
     if (loading) {
         return (
@@ -569,6 +662,13 @@ function App() {
                         <Calendar size={16} />
                         <span>Теплокарта</span>
                     </button>
+                    <button 
+                        className={`tab-switcher-btn ${activeTab === 'reminders' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('reminders')}
+                    >
+                        <Bell size={16} />
+                        <span>Напоминания</span>
+                    </button>
                 </div>
             </header>
 
@@ -661,7 +761,7 @@ function App() {
                         </motion.div>
                     ))}
                 </main>
-            ) : (
+            ) : activeTab === 'heatmap' ? (
                 <main className="heatmap-main">
                     <InteractiveHeatmap 
                         allDayShifts={allDayShifts}
@@ -672,6 +772,120 @@ function App() {
                             setSelectedEmployee(fullEmp);
                         }}
                     />
+                </main>
+            ) : (
+                <main className="reminders-main">
+                    <div className="reminders-container">
+                        <div className="reminder-form-card">
+                            <h3 className="form-title">
+                                <Plus size={18} />
+                                <span>Новое напоминание</span>
+                            </h3>
+                            <form onSubmit={handleCreateReminder} className="reminder-form">
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label htmlFor="ticket">Тикет (номер или none)</label>
+                                        <input 
+                                            id="ticket"
+                                            type="text" 
+                                            placeholder="например: 12345" 
+                                            value={ticket}
+                                            onChange={(e) => setTicket(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="form-group">
+                                        <label htmlFor="targetUser">Кому</label>
+                                        <input 
+                                            id="targetUser"
+                                            type="text" 
+                                            placeholder="self или Фамилия" 
+                                            value={targetUser}
+                                            onChange={(e) => setTargetUser(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="form-row">
+                                    <div className="form-group">
+                                        <label htmlFor="remindAt">Когда напомнить</label>
+                                        <input 
+                                            id="remindAt"
+                                            type="datetime-local" 
+                                            value={remindAt}
+                                            onChange={(e) => setRemindAt(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label htmlFor="reminderText">Текст напоминания</label>
+                                    <textarea 
+                                        id="reminderText"
+                                        placeholder="Что нужно не забыть?" 
+                                        value={reminderText}
+                                        onChange={(e) => setReminderText(e.target.value)}
+                                        required
+                                        rows={2}
+                                    />
+                                </div>
+
+                                <button type="submit" className="submit-btn" disabled={isSubmitting}>
+                                    {isSubmitting ? 'Сохранение...' : 'Создать напоминание'}
+                                </button>
+                            </form>
+                        </div>
+
+                        <div className="reminders-list-section">
+                            <h3 className="section-title">
+                                <Bell size={18} />
+                                <span>Активные напоминания</span>
+                            </h3>
+                            
+                            {remindersLoading ? (
+                                <div className="reminders-loading">
+                                    <Activity className="pulse" size={24} />
+                                    <p>Загрузка напоминаний...</p>
+                                </div>
+                            ) : reminders.length === 0 ? (
+                                <div className="no-reminders">
+                                    <p>Нет активных напоминаний</p>
+                                    <span>Вы можете создать напоминание через форму выше или в чате с ботом фразой на естественном языке.</span>
+                                </div>
+                            ) : (
+                                <div className="reminders-grid">
+                                    {reminders.map((r: any) => {
+                                        const remindDate = new Date(r.remind_at);
+                                        const timeStr = remindDate.toLocaleTimeString("ru-RU", { hour: '2-digit', minute: '2-digit', timeZone: "Europe/Moscow" });
+                                        const dateStr = remindDate.toLocaleDateString("ru-RU", { day: '2-digit', month: '2-digit', timeZone: "Europe/Moscow" });
+                                        
+                                        return (
+                                            <div key={r.id} className="reminder-card">
+                                                <div className="reminder-card-header">
+                                                    <span className="reminder-ticket">
+                                                        {r.ticket_number && r.ticket_number !== 'none' ? `Тикет #${r.ticket_number}` : 'Общее напоминание'}
+                                                    </span>
+                                                    <button 
+                                                        className="delete-reminder-btn"
+                                                        onClick={() => handleDeleteReminder(r.id)}
+                                                        title="Удалить"
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                                <p className="reminder-text">{r.reminder_text}</p>
+                                                <div className="reminder-meta">
+                                                    <span className="reminder-time">📅 {dateStr} в {timeStr} MSK</span>
+                                                    <span className="reminder-target">👤 Кому: {r.target_username || 'self'}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </main>
             )}
 
@@ -691,14 +905,14 @@ function App() {
                         exit={{ opacity: 0 }}
                         onClick={() => setShowDops(false)}
                     >
-                             <motion.div
-                                className="modal-content"
-                                initial={{ scale: 0.8, y: 50, opacity: 0 }}
-                                animate={{ scale: 1, y: 0, opacity: 1 }}
-                                exit={{ scale: 0.8, y: 50, opacity: 0 }}
-                                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                onClick={(e) => e.stopPropagation()}
-                            >
+                        <motion.div
+                            className="modal-content"
+                            initial={{ scale: 0.8, y: 50, opacity: 0 }}
+                            animate={{ scale: 1, y: 0, opacity: 1 }}
+                            exit={{ scale: 0.8, y: 50, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <div className="modal-header">
                                 <Sparkles size={20} color="#00f2ff" />
                                 <h2>Дополнительные смены</h2>
