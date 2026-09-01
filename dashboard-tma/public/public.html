@@ -460,6 +460,36 @@
             border-color: rgba(255, 255, 255, 0.15);
         }
 
+        .action-btn.sync-btn {
+            background: rgba(52, 211, 153, 0.1);
+            border-color: rgba(52, 211, 153, 0.3);
+            color: var(--accent-green);
+        }
+
+        .action-btn.sync-btn:hover {
+            background: rgba(52, 211, 153, 0.2);
+            border-color: rgba(52, 211, 153, 0.5);
+            color: #ffffff;
+            box-shadow: 0 0 15px rgba(52, 211, 153, 0.25);
+        }
+
+        .action-btn.sync-btn.loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        :root[data-theme="light"] .action-btn.sync-btn {
+            background: rgba(13, 148, 136, 0.12);
+            border-color: rgba(13, 148, 136, 0.35);
+            color: var(--accent-green);
+        }
+
+        :root[data-theme="light"] .action-btn.sync-btn:hover {
+            background: rgba(13, 148, 136, 0.25);
+            border-color: rgba(13, 148, 136, 0.6);
+            color: #0c354a;
+        }
+
         /* Filter Bar and Chips (Custom Scrollbar) */
         .filter-bar {
             display: flex;
@@ -985,6 +1015,12 @@
             <div class="header-actions">
                 <button class="action-btn" onclick="expandAll()">Развернуть все</button>
                 <button class="action-btn" onclick="collapseAll()">Свернуть все</button>
+                <button class="action-btn sync-btn" id="sync-comp-btn" onclick="syncCompetenciesFromSheet()" title="Загрузить актуальные компетенции из Google Таблицы">
+                    <svg class="sync-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                    <span>Обновить компетенции</span>
+                </button>
             </div>
             <button class="theme-toggle-btn" onclick="toggleTheme()" aria-label="Переключить тему">
                 <svg class="theme-icon sun" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -1053,6 +1089,8 @@
         })();
 
         const API_URL = 'https://pkpvsdqvpqpqvlneevud.supabase.co/functions/v1/public-dashboard?format=json';
+        const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1UJnGGzOY7L_6ATWjHsnhWBFbvhlnScJsnDRNZo8a4J4/gviz/tq?tqx=out:csv&sheet=705105921';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrcHZzZHF2cHFwcXZsbmVldnVkIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MDI1NTQwOCwiZXhwIjoyMDg1ODMxNDA4fQ.caadz2tQLSTQjCt0z-cV0ea4yZfTT_5BGLBa_n5zgE8';
 
         function toggleTheme() {
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
@@ -1374,11 +1412,162 @@
             }
         });
 
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                background: ${type === 'success' ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)'};
+                color: #ffffff;
+                padding: 12px 20px;
+                border-radius: 12px;
+                font-size: 0.9rem;
+                font-weight: 500;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+                backdrop-filter: blur(10px);
+                transform: translateY(20px);
+                opacity: 0;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                pointer-events: auto;
+            `;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.transform = 'translateY(0)';
+                toast.style.opacity = '1';
+            }, 10);
+            setTimeout(() => {
+                toast.style.transform = 'translateY(20px)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        function parseCompetenciesCSV(text) {
+            const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+            if (lines.length < 2) return [];
+
+            function parseRow(line) {
+                const row = [];
+                let inside = false;
+                let cur = '';
+                for (let i = 0; i < line.length; i++) {
+                    const c = line[i];
+                    if (c === '"') {
+                        if (inside && line[i + 1] === '"') {
+                            cur += '"';
+                            i++;
+                        } else {
+                            inside = !inside;
+                        }
+                    } else if (c === ',' && !inside) {
+                        row.push(cur.trim());
+                        cur = '';
+                    } else {
+                        cur += c;
+                    }
+                }
+                row.push(cur.trim());
+                return row;
+            }
+
+            const headers = parseRow(lines[0]);
+            const rows = [];
+            for (let i = 1; i < lines.length; i++) {
+                const vals = parseRow(lines[i]);
+                const empName = vals[0];
+                if (!empName) continue;
+                const comp = {};
+                for (let col = 2; col < headers.length; col++) {
+                    const sys = headers[col];
+                    const val = vals[col];
+                    if (sys && val) {
+                        comp[sys] = val;
+                    }
+                }
+                rows.push({ name: empName, competencies: comp });
+            }
+            return rows;
+        }
+
+        async function syncCompetenciesFromSheet() {
+            const btn = document.getElementById('sync-comp-btn');
+            if (!btn || btn.classList.contains('loading')) return;
+
+            btn.classList.add('loading');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner" style="width: 8px; height: 8px; display: inline-block; background-color: var(--accent-green); vertical-align: middle; margin-right: 4px;"></span> <span>Синхронизация...</span>';
+
+            try {
+                // 1. Fetch CSV from Google Sheets
+                const csvRes = await fetch(GOOGLE_SHEET_CSV_URL);
+                if (!csvRes.ok) throw new Error('Не удалось загрузить данные из Google Таблицы');
+                const csvText = await csvRes.text();
+
+                // 2. Parse CSV
+                const rows = parseCompetenciesCSV(csvText);
+                if (rows.length === 0) throw new Error('Лист компетенций пуст или не распознан');
+
+                // 3. Fetch existing employees from Supabase
+                const empRes = await fetch('https://pkpvsdqvpqpqvlneevud.supabase.co/rest/v1/employees?select=id,name&limit=500', {
+                    headers: {
+                        'apikey': SUPABASE_KEY,
+                        'Authorization': 'Bearer ' + SUPABASE_KEY
+                    }
+                });
+                if (!empRes.ok) throw new Error('Не удалось подключиться к базе данных Supabase');
+                const empList = await empRes.json();
+
+                const empMap = new Map();
+                empList.forEach(e => empMap.set(e.name.trim(), e.id));
+
+                // 4. Batch update employees in Supabase
+                let updated = 0;
+                const updatePromises = rows.map(async (row) => {
+                    let empId = empMap.get(row.name);
+                    if (!empId) {
+                        for (const [k, id] of empMap.entries()) {
+                            if (k.startsWith(row.name) || row.name.startsWith(k) || k.replace(/\s+/g, ' ') === row.name.replace(/\s+/g, ' ')) {
+                                empId = id;
+                                break;
+                            }
+                        }
+                    }
+                    if (!empId) return;
+
+                    const patchRes = await fetch(`https://pkpvsdqvpqpqvlneevud.supabase.co/rest/v1/employees?id=eq.${empId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': SUPABASE_KEY,
+                            'Authorization': 'Bearer ' + SUPABASE_KEY,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({ competencies: row.competencies })
+                    });
+                    if (patchRes.ok) updated++;
+                });
+
+                await Promise.all(updatePromises);
+
+                // 5. Refresh dashboard UI with fresh data
+                await refreshData();
+                showToast(`✅ Компетенции обновлены (${updated} сотрудников)`, 'success');
+            } catch (err) {
+                console.error('Sync failed:', err);
+                showToast('❌ Ошибка синхронизации: ' + err.message, 'error');
+            } finally {
+                btn.classList.remove('loading');
+                btn.innerHTML = originalHtml;
+            }
+        }
+
         // Load initial data
         refreshData();
 
         // Set intervals
         setInterval(refreshData, 60000);
     </script>
+    <div id="toast-container" style="position: fixed; bottom: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 8px; pointer-events: none;"></div>
 </body>
 </html>
